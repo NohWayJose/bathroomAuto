@@ -4,5 +4,5 @@ mosquitto_pub -h 192.168.7.245 -p 1883 -t "bathroom/mirror/BGLightCol" -m "fff2f
 mosquitto_pub -h 192.168.7.245 -p 1883 -t "bathroom/mirror/fiveMinTickCol" -m "ffaaff"
 mosquitto_pub -h 192.168.7.245 -p 1883 -t "bathroom/mirror/fifteenMinTickCol" -m "a200ff"
 mosquitto_pub -h 192.168.7.245 -p 1883 -t "bathroom/mirror/minCol" -m "55ff00"
-mosquitto_pub -h 192.168.7.245 -p 1883 -t "bathroom/mirror/hourCol" -m "005500"
+mosquitto_pub -h 192.168.7.245 -p 1883 -t "bathroom/mirror/hourCol" -m "009999"
 mosquitto_pub -h 192.168.7.245 -p 1883 -t "bathroom/mirror/light" -m "OFF"
