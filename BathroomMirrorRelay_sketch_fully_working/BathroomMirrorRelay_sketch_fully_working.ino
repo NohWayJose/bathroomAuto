@@ -8,6 +8,7 @@
 #include <NTPClient.h>
 #include <WiFiUdp.h>
 #include <sstream>
+#include <iostream>
 
 //#include <string>
 
@@ -118,20 +119,22 @@ hourCol hourColObj(0, 255, 0); //the hour hand
 
 #define MIRROR_RELAY_PIN 5 //D1
 #define NEOPIXEL_PIN 12 //D6
-#define NUM_PIXELS 280
+#define NUM_PIXELS 310
 #define TOUCH_SW_PIN 14 //D5
 #define SECONDS .001
 
 int val;
 int brightness = 56;
 int LEDoff = 0;
-int fiveMin = NUM_PIXELS/12;
+int fiveMin = std::round(NUM_PIXELS/12);
 int fifteenMin = fiveMin*3;
 int lastMinute = 0;
 int currentMinute;
 int currentHour;
-int hourPixel;
 int minutePixel;
+int hourPixel;
+double hourProportion;
+double minuteProportion;
 
 //NTP setup
 const char* ntpServer = "pool.ntp.org";
@@ -288,18 +291,66 @@ IRAM_ATTR void buttonPressed(){ //attached to interrupt and sets wasPressed to t
 }
 
 void calculatePixels(int currentHour, int currentMinute){
+  Serial.print("currentHour:");
+  Serial.println(currentHour);
+  Serial.print("currentMinute:");
+  Serial.println(currentMinute);
   int hr;
+  Serial.print("initialised -> hr:");
+  Serial.println(hr);
+
+  int pxPerHr; //same as pixels per five minutes
+  Serial.print("initialised -> pxPerHr:");
+  Serial.println(pxPerHr);
+
   if (currentHour >= 12){hr = currentHour - 12;} else {hr = currentHour;} //regress to 12hr clock
-  hourPixel = NUM_PIXELS/12*hr;
-  minutePixel = NUM_PIXELS/60*currentMinute;
-  float fractionalHour = currentMinute/60;
-  Serial.print("Fraction of hour: ");
+  Serial.print("12 hourised currentHour -> hr:");
+  Serial.println(hr);
+
+  if (currentHour = 12){timeClient.update();} //recalibrate the time at midnight
+
+  hourProportion = (double)NUM_PIXELS/(double)12; // can calculate this between any two hours, I think - for this I've just used midday to 1
+  Serial.print("1/12*NumPixels -> hourProportion:");
+  Serial.println(hourProportion);
+
+  //could add code to see which has the smallest rounding error between rounding up/down
+  pxPerHr = round(hourProportion); // expecting this to round to nearest integer with .5 to round up
+  Serial.print("round hourProportion to nearest integer -> pxPerHr:");
+  Serial.println(pxPerHr);
+
+  hourPixel = pxPerHr*hr; //the number of pixels to this hour
+  Serial.print("total number of pixels to this hour mark -> hourPixel:");
+  Serial.println(hourPixel);
+
+  double fractionalHour = (double)currentMinute/(double)60;
+  Serial.print("Proportion of an hour measured in minutes this hour -> fractionalHour:");
   Serial.println(fractionalHour);
-  int fractionalPixel = fractionalHour*NUM_PIXELS/12; //the proportion of the hour elapsed expressed as the number of pixels covered from the number representing one hour
-  Serial.print("As pixels: ");
-  Serial.println(fractionalPixel);
-  hourPixel = hourPixel + fractionalPixel; // the hour marker plus the proportion elapsed
- 
+
+  int fractionalHourPx = round(fractionalHour*pxPerHr);
+  Serial.print("round fractionalHour to nearest px -> fractionalHourPx:");
+  Serial.println(fractionalHourPx);
+
+  hourPixel = hourPixel + fractionalHourPx;
+  Serial.print("Add all the hour px & additional minute px -> hourPixel:");
+  Serial.println(hourPixel);
+
+  if (hourPixel > NUM_PIXELS){hourPixel = NUM_PIXELS;} // cancel any overrun from rounding - just in case
+
+  minuteProportion = (double)currentMinute/60*NUM_PIXELS;
+  Serial.print("minuteProportion:");
+  Serial.println(minuteProportion);
+
+  minutePixel = round(minuteProportion);
+  Serial.print("minutePixel:");
+  Serial.println(minutePixel);
+
+
+  //  Serial.print("Fraction of hour: ");
+  //  Serial.println(fractionalHour);
+  // int fractionalPixel = fractionalHour*NUM_PIXELS/12; //the proportion of the hour elapsed expressed as the number of pixels covered from the number representing one hour
+  // Serial.print("As pixels: ");
+  // Serial.println(fractionalPixel);
+  // //hourProportion = hourPixel + fractionalPixel; // the hour marker plus the proportion elapsed
 
   //print time
   Serial.println();
@@ -308,7 +359,7 @@ void calculatePixels(int currentHour, int currentMinute){
   Serial.print(":");
   Serial.println(currentMinute);
   //print time in pixel locations
-  Serial.print("     Hour pixel:");
+  Serial.print("     Hour pixels:");
   Serial.println(hourPixel);
   Serial.print("     Minute pixel:");
   Serial.println(minutePixel);  
@@ -389,12 +440,13 @@ void setup() {
   timeClient.begin();// Initialize a NTPClient to get time
   // GMT 0 = 0
   timeClient.setTimeOffset(0);
+  timeClient.update();
 }
 
 void loop() {
   client.loop();
   delay(1000*SECONDS);
-  timeClient.update();
+  //timeClient.update();
   currentHour = timeClient.getHours();
   currentMinute = timeClient.getMinutes();
 
