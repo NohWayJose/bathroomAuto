@@ -109,12 +109,12 @@ class hourCol {
 };
 
 //Instantiate classes, with default values
-nightLightCol nightLightColObj(50, 0, 0); //comes on in response to a trigger from the phototransistor detecting low light
-backgroundCol backgroundColObj(75, 75, 75); //comes on in response to the touch switch and overrides the night light and the clock
-fiveMinTickCol fiveMinTickColObj(50, 20, 20); //the five minute/hour markers round the clock face
-fifteenMinTickCol fifteenMinTickColObj(90, 0, 30); //the cardinal markers (15,30,45,60mins/12,3,6,9hours)
-minCol minColObj(0, 0, 255); //the minute hand
-hourCol hourColObj(0, 255, 0); //the hour hand
+nightLightCol nightLightColObj(59, 0, 0); //comes on in response to a trigger from the phototransistor detecting low light
+backgroundCol backgroundColObj(128, 128, 128); //comes on in response to the touch switch and overrides the night light and the clock
+fiveMinTickCol fiveMinTickColObj(36, 36, 36); //the five minute/hour markers round the clock face
+fifteenMinTickCol fifteenMinTickColObj(255, 255, 255); //the cardinal markers (15,30,45,60mins/12,3,6,9hours)
+minCol minColObj(0, 180, 0); //the minute hand
+hourCol hourColObj(180, 0, 0); //the hour hand
 
 #define MIRROR_RELAY_PIN 5 //D1
 #define NEOPIXEL_PIN 12 //D6
@@ -131,6 +131,7 @@ int lastMinute = 0;
 int currentMinute;
 int currentHour;
 int minutePixel;
+int pxPerHr; //same as pixels per five minutes
 int hourPixel;
 double hourProportion;
 double minuteProportion;
@@ -298,7 +299,6 @@ void calculatePixels(int currentHour, int currentMinute){
   Serial.print("initialised -> hr:");
   Serial.println(hr);
 
-  int pxPerHr; //same as pixels per five minutes
   Serial.print("initialised -> pxPerHr:");
   Serial.println(pxPerHr);
 
@@ -365,7 +365,6 @@ void calculatePixels(int currentHour, int currentMinute){
 }
 
 void LEDs(char reason){
-
   if (reason == 'e'){
     Serial.println("Button was pressed");
     wasPressed = false;
@@ -376,45 +375,56 @@ void LEDs(char reason){
   }else if (reason == 'u'){
     Serial.println("colour updated");
   }
+  calculatePixels(currentHour, currentMinute);
+
   if (lightState == false) { //cycle through each pixel, setting its colour
     Serial.println("  lightstate is true"); //we're the opposite way round as I needed to flip state early
     //NeoPixel.clear();
     for (int ON_pixel = 0; ON_pixel < NUM_PIXELS; ON_pixel++) { // for each pixel, set colour
-      if (ON_pixel % fifteenMin == 0) { //make every 15 mins worth of pixel red
+    //Serial.println(pxPerHr);
+      if (ON_pixel % (pxPerHr*3) == 0) { //make every 15 mins worth of pixel red
         NeoPixel.setPixelColor(ON_pixel, NeoPixel.Color(fifteenMinTickColObj.rr, fifteenMinTickColObj.gg, fifteenMinTickColObj.bb)); //200,45,45
         Serial.print("0");
-      } else if (ON_pixel % fiveMin == 0) { //make every 5 mins worth of pixel pink
+      } else if (ON_pixel % pxPerHr == 0) { //make every 5 mins worth of pixel pink
         NeoPixel.setPixelColor(ON_pixel, NeoPixel.Color(fiveMinTickColObj.rr, fiveMinTickColObj.gg, fiveMinTickColObj.bb)); //200,45,45
-        Serial.print("+"); 
-      } else if (lightState == false){ //all other pixels are dim white
+        Serial.print("+");
+      } else if (ON_pixel == hourPixel) { //
+        Serial.print("^");
+      } else if (ON_pixel == minutePixel) { //  
+        Serial.print("v");
+      } else if (lightState == false) { //all other pixels are dim white
         NeoPixel.setPixelColor(ON_pixel, NeoPixel.Color(backgroundColObj.rr, backgroundColObj.gg, backgroundColObj.bb)); //150,150,150
-        Serial.print("-");
+        Serial.print("=");
       }
-      NeoPixel.setPixelColor(hourPixel, NeoPixel.Color(minColObj.rr, minColObj.gg, minColObj.bb)); // Green hour
-      NeoPixel.setPixelColor(minutePixel, NeoPixel.Color(hourColObj.rr, hourColObj.gg, hourColObj.bb)); // Blue minute
+        NeoPixel.setPixelColor(hourPixel, NeoPixel.Color(hourColObj.rr, hourColObj.gg, hourColObj.bb)); // Green hour
+        NeoPixel.setPixelColor(minutePixel, NeoPixel.Color(minColObj.rr, minColObj.gg, minColObj.bb)); // Blue minute
     }
     Serial.println("");
 
   } else { //cycle through each pixel, setting its colour to off (apart from clock and dim hour markers)
     Serial.println("  lightstate is false"); //we're the opposite way round as I needed to flip state early
-      for (int OFF_pixel = 0; OFF_pixel < NUM_PIXELS; OFF_pixel++) { // for each pixel, set colour to off, apart from 
-        if (OFF_pixel % fifteenMin == 0) { //make every 5 mins worth of pixel red
-        NeoPixel.setPixelColor(OFF_pixel, NeoPixel.Color(fifteenMinTickColObj.rr, fifteenMinTickColObj.gg, fifteenMinTickColObj.bb)); //200,45,45
+    for (int ON_pixel = 0; ON_pixel < NUM_PIXELS; ON_pixel++) { // for each pixel, set colour
+    //coloSerial.println(pxPerHr);
+      if (ON_pixel % (pxPerHr*3) == 0) { //make every 15 mins worth of pixel red
+        NeoPixel.setPixelColor(ON_pixel, NeoPixel.Color(fifteenMinTickColObj.rr, fifteenMinTickColObj.gg, fifteenMinTickColObj.bb)); //200,45,45
         Serial.print("0");
-      } else if (OFF_pixel % fiveMin == 0) { //make every 5 mins worth of pixel red
-        NeoPixel.setPixelColor(OFF_pixel, NeoPixel.Color(fiveMinTickColObj.rr, fiveMinTickColObj.gg, fiveMinTickColObj.bb));
-        Serial.print("+"); 
+      } else if (ON_pixel % pxPerHr == 0) { //make every 5 mins worth of pixel pink
+        NeoPixel.setPixelColor(ON_pixel, NeoPixel.Color(fiveMinTickColObj.rr, fiveMinTickColObj.gg, fiveMinTickColObj.bb)); //200,45,45
+        Serial.print("+");
+      } else if (ON_pixel == hourPixel) { //
+        Serial.print("^");
+      } else if (ON_pixel == minutePixel) { //  
+        Serial.print("v");
       } else { //all other pixels are off
-        NeoPixel.setPixelColor(OFF_pixel, NeoPixel.Color(1, 1, 1)); //endimify the background
-        Serial.print("-");
+        NeoPixel.setPixelColor(ON_pixel, NeoPixel.Color(1, 1, 1)); //endimify the background
+        Serial.print("_");
       }
-      NeoPixel.setPixelColor(hourPixel, NeoPixel.Color(minColObj.rr, minColObj.gg, minColObj.bb)); // Green hour
-      NeoPixel.setPixelColor(minutePixel, NeoPixel.Color(hourColObj.rr, hourColObj.gg, hourColObj.bb)); // Blue minute
-      NeoPixel.setBrightness(128);
+      NeoPixel.setPixelColor(hourPixel, NeoPixel.Color(hourColObj.rr, hourColObj.gg, hourColObj.bb)); // Green hour
+      NeoPixel.setPixelColor(minutePixel, NeoPixel.Color(minColObj.rr, minColObj.gg, minColObj.bb)); // Blue minute
     }
     Serial.println("");
   }
-  calculatePixels(currentHour, currentMinute);
+  
   NeoPixel.show();  //turn on light
 }
 
