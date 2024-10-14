@@ -1,0 +1,61 @@
+#include <ESP8266WiFi.h>
+#include <ESPPubSubClientWrapper.h>
+
+// Network & MQTT constants
+const char* ssid = "FINBAR24";
+const char* password = "61agwsso199ew";
+const char* mqtt_server = "192.168.7.245";
+const char* topic = "bathroom/fanSwitch";
+const char* outTopic = "bathroom/fanSwitchStatus";
+#define DISCONNECT_TOPIC "disconnect"
+//const uint16_t *mqtt_port = {1883};
+
+const int FanRelay = 13;  //D7
+ String strTopic;
+ String strPayload;
+
+ESPPubSubClientWrapper client(mqtt_server);  //, mqtt_port);
+
+void connectSuccess(uint16_t reConnectCount) {
+  Serial.print("Connected to MQTT-Broker!\nThis is connection nb: ");
+  Serial.println(reConnectCount + 1);
+}
+
+void gotDisconnected(uint16_t disconnectCount) {
+  Serial.print("Got disconnected from MQTT-Broker!\nThis is disconnect nb: ");
+  Serial.println(disconnectCount);
+}
+
+void callbackFan(char* topic, char* payload) {
+  Serial.print("\r\nMessage "); // carriage return \r & linefeed \n
+  Serial.print("Fan instruction ");
+  Serial.print(payload);
+  Serial.print(" received");
+  if (strcmp(payload, "ON") == 0){
+    digitalWrite(FanRelay, HIGH);
+  }else if (strcmp(payload, "OFF") == 0){
+    digitalWrite(FanRelay, LOW);
+  }
+}
+
+void setup() {
+  Serial.begin(115200);
+  WiFi.begin(ssid, password);
+  // Connect to WiFi
+  Serial.println();
+  Serial.print("Connecting to ");
+  Serial.println(ssid);
+  WiFi.begin(ssid, password);
+  client.onConnect(connectSuccess);
+	client.onDisconnect(gotDisconnected);
+	client.on(DISCONNECT_TOPIC, [](char* topic, byte* payload, unsigned int length) {client.disconnect();});
+
+  client.on(topic, callbackFan);
+
+  pinMode(FanRelay, OUTPUT);
+  digitalWrite(FanRelay, LOW);
+}
+
+void loop() {
+  client.loop();
+}
