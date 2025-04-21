@@ -266,6 +266,12 @@ void callbackLightState(char* lightTopic, char * strPayload) {  //Turn the light
   }
 }
 
+void callbackReset(char* resetTopic, char * strPayload){ //reset the ESP board
+  if (strcmp(strPayload,"RESET") == 0){
+    ESP.reset();
+  }
+}
+
 void callbackHeater(char* strTopic, char * strPayload) { //React to MQTT signal to heat mirror (turn on relay)
   Serial.println("\r\nMessage ""Mirror instruction"" received");
   Serial.println(strTopic);
@@ -446,6 +452,7 @@ void setup() {
   client.on(minColTopic, callbackMinute);
   client.on(hourColTopic, callbackHour);
   client.on(lightTopic, callbackLightState);
+  client.on(resetTopic, callbackReset);
   pinMode(MIRROR_RELAY_PIN, OUTPUT);
   pinMode(TOUCH_SW_PIN, INPUT);
   pinMode(NEOPIXEL_PIN, OUTPUT);
