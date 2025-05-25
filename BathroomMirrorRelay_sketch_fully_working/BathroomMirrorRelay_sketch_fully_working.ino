@@ -26,6 +26,7 @@ const char* fifteenMinTickColTopic  = "bathroom/mirror/fifteenMinTickCol"; //str
 const char* minColTopic          = "bathroom/mirror/minCol"; //string Hex RGB
 const char* hourColTopic         = "bathroom/mirror/hourCol"; //string Hex RGB
 const char* lightTopic           = "bathroom/mirror/light"; //ON or OFF
+const char* resetTopic           = "bathroom/mirror/reset"; //RESET
 
 // time
 int myYear;
@@ -142,12 +143,16 @@ const long  gmtOffset_sec = 0;
 const int   daylightOffset_sec = 3600;
 WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP, ntpServer);
+
+//MQTT Mosquitto server  object setup
 ESPPubSubClientWrapper client(mqtt_server); // ommiting ,port - defaults to 1883
+
+//NeoPixel object setup
 Adafruit_NeoPixel NeoPixel(NUM_PIXELS, NEOPIXEL_PIN, NEO_GRB + NEO_KHZ800);
 
 //----------------------------------
 
-// makes a number from two ascii hexa characters
+// makes a number from two ascii hexa characters - Courtesy of Erhan Mengusoglu at IBM Hursley
 uint32_t ahex2int(char a, char b){
 
     a = (a <= '9') ? a - '0' : (a & 0x7) + 9;
@@ -258,6 +263,12 @@ void callbackLightState(char* lightTopic, char * strPayload) {  //Turn the light
     Serial.printf("Payload-len=%d, OFF-Payload=\"%s\"\r\n", strlen(strPayload), strPayload);
     lightState = false;
     wasPressed = true;
+  }
+}
+
+void callbackReset(char* resetTopic, char * strPayload){ //reset the ESP board
+  if (strcmp(strPayload,"RESET") == 0){
+    ESP.reset();
   }
 }
 
@@ -441,6 +452,7 @@ void setup() {
   client.on(minColTopic, callbackMinute);
   client.on(hourColTopic, callbackHour);
   client.on(lightTopic, callbackLightState);
+  client.on(resetTopic, callbackReset);
   pinMode(MIRROR_RELAY_PIN, OUTPUT);
   pinMode(TOUCH_SW_PIN, INPUT);
   pinMode(NEOPIXEL_PIN, OUTPUT);
