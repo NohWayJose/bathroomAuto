@@ -109,6 +109,85 @@ The selected theme name is persisted to global context (`currentTheme`) and rest
 restart via `ParseThemes`. The Clipboard widget on the Settings page lets you copy the current
 theme JSON and paste in edits; saving re-applies the theme immediately and writes the file.
 
+## MQTT Topic Reference
+
+All devices publish/subscribe to the Mosquitto broker at `192.168.7.245:1883`.
+
+### Bathroom sensors
+
+| Topic | Direction | Publisher | Valid values | Purpose |
+|-------|-----------|-----------|--------------|---------|
+| `bathroom/temp` | pub | SHT30 v2 ESP32 | float (°C) | Bathroom air temperature |
+| `bathroom/humidity` | pub | SHT30 v2 ESP32 | float (%) | Bathroom relative humidity |
+| `esp/dht/b/temp` | pub | ESP8266 (simplified) | float (°C) | Bathroom temp (older sketch) |
+| `esp/dht/b/humid` | pub | ESP8266 (simplified) | float (%) | Bathroom humidity (older sketch) |
+| `esp/dht/h/temp` | pub | ESP in location H | float (°C) | Temperature, H location |
+| `esp/dht/h/hum` | pub | ESP in location H | float (%) | Humidity, H location |
+| `esp/dht/k/temp` | pub | ESP in location K | float (°C) | Temperature, K location |
+| `esp/dht/k/hum` | pub | ESP in location K | float (%) | Humidity, K location |
+| `esp/dht/k/client` | pub | ESP in location K | string | Client connection status |
+| `lounge/temp` | pub | Lounge sensor | float (°C) | Lounge temperature |
+| `lounge/humidity` | pub | Lounge sensor | float (%) | Lounge humidity |
+| `lounge/client` | pub | Lounge sensor | string | Lounge client connection status |
+
+### Fan control
+
+| Topic | Direction | Publisher → Subscriber | Valid values | Purpose |
+|-------|-----------|------------------------|--------------|---------|
+| `bathroom/fanSwitch` | pub | Node-RED → FanRelay ESP / Node-RED (echo) | `ON`, `OFF` | Commands the fan relay; also echoed back to NR to detect manual overrides |
+| `bathroom/fan/mode` | pub | Node-RED → Node-RED | `humidity`, `shortTimer`, `longTimer` | Sets the active fan control mode |
+| `esp/dht/b/fanState` | pub | SHT30 v2 ESP32 → Node-RED | `fanOff`, `fanOn10`, `humidityTrigger` | Fan state reported by the sensor node |
+| `esp/dht/b/fanresume` | sub | Node-RED → SHT30 v2 ESP32 | any | Tells ESP to resume normal fan operation |
+| `esp/dht/b/fanStateNR` | sub | Node-RED → SHT30 v2 ESP32 | any | Node-RED-driven fan state override |
+
+### Timer progress (internal, NR → NR via MQTT)
+
+| Topic | Direction | Valid values | Purpose |
+|-------|-----------|--------------|---------|
+| `bathroom/stprog` | pub/sub | JSON `{"v": float, "max": float, "show": bool}` | Short timer elapsed (min) and total; `show:false` hides progress bar |
+| `bathroom/ltprog` | pub/sub | JSON `{"v": float, "max": float, "show": bool}` | Long timer elapsed (min) and total; `show:false` hides progress bar |
+
+### Mirror LED colours (Node-RED → Mirror ESP32)
+
+All colour topics carry a 6-character hex RGB string with no `#`, e.g. `0062FF`.
+
+| Topic | Purpose |
+|-------|---------|
+| `bathroom/mirror/nightLightCol` | Night-light LED colour |
+| `bathroom/mirror/BGLightCol` | Background / ambient LED colour |
+| `bathroom/mirror/fiveMinTickCol` | Clock 5-minute tick mark colour |
+| `bathroom/mirror/fifteenMinTickCol` | Clock 15-minute tick mark colour |
+| `bathroom/mirror/minCol` | Minute hand colour |
+| `bathroom/mirror/hourCol` | Hour hand colour |
+
+### Mirror control
+
+| Topic | Direction | Publisher → Subscriber | Valid values | Purpose |
+|-------|-----------|------------------------|--------------|---------|
+| `bathroom/mirror/heater` | pub | Node-RED → Mirror ESP32 | `ON`, `OFF` | Demist heater relay |
+| `bathroom/mirror/light` | pub | Node-RED → Mirror ESP32 | `ON`, `OFF` | Mirror light on/off |
+| `bathroom/mirror/light/switch` | sub | Physical switch → Node-RED | any | Physical mirror light switch state |
+| `bathroom/mirror/SSH/switch` | sub | SSH trigger → Node-RED | any | SSH-triggered mirror switch |
+| `bathroom/mirror/reset` | pub | Node-RED → Mirror ESP32 | any | Resets the mirror ESP32 |
+
+### Settings config (Node-RED internal)
+
+| Topic | Valid values | Purpose |
+|-------|--------------|---------|
+| `bathroom/humidityThreshold` | integer (%) | Humidity level that triggers fan in humidity mode |
+| `bathroom/shortTimer` | integer (min) | Short timer duration |
+| `bathroom/longTimer` | integer (min) | Long timer duration |
+
+### Other / integrations
+
+| Topic | Broker | Direction | Purpose |
+|-------|--------|-----------|---------|
+| `esp/soil/a/humid` | local | pub | Soil moisture sensor reading |
+| `esp/soil/a/irrigate` | local | sub | Irrigation trigger |
+| `glucose/reading` | local | pub/sub | CGM glucose data relay |
+| `company/code` | remote | sub | Access code MQTT input (OpenSesame) |
+| `cmnd/opensesame/POWER1` | remote | pub | Shelly switch command (OpenSesame) |
+
 ## Known Errors on Startup (pre-existing, benign)
 
 Several `ui-gauge` and `ui-chart` nodes report "No group configured" / `getBase` TypeError.
