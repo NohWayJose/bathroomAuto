@@ -427,6 +427,7 @@ void LEDs(char reason){
       }
       NeoPixel.setPixelColor(hourPixel, NeoPixel.Color(hourColObj.rr, hourColObj.gg, hourColObj.bb)); // Green hour
       NeoPixel.setPixelColor(minutePixel, NeoPixel.Color(minColObj.rr, minColObj.gg, minColObj.bb)); // Blue minute
+      NeoPixel.setBrightness(128);
     }
     Serial.println("");
   }
