@@ -1,0 +1,34 @@
+{
+  "Default": {
+    "nightLight": "320000",
+    "background": "4B4B4B",
+    "fiveMinTick": "321414",
+    "fifteenMinTick": "5A001E",
+    "minuteHand": "0000FF",
+    "hourHand": "00FF00"
+  },
+  "Warm": {
+    "nightLight": "3C1400",
+    "background": "4B2800",
+    "fiveMinTick": "4B2000",
+    "fifteenMinTick": "7A001A",
+    "minuteHand": "FF6600",
+    "hourHand": "FFB300"
+  },
+  "Night": {
+    "nightLight": "0D0000",
+    "background": "020101",
+    "fiveMinTick": "0D0000",
+    "fifteenMinTick": "160000",
+    "minuteHand": "000050",
+    "hourHand": "003000"
+  },
+  "Cool": {
+    "nightLight": "000032",
+    "background": "000A14",
+    "fiveMinTick": "001432",
+    "fifteenMinTick": "00005A",
+    "minuteHand": "00CCFF",
+    "hourHand": "0055FF"
+  }
+}
