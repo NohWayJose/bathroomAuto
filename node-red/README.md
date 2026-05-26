@@ -121,14 +121,16 @@ All devices publish/subscribe to the Mosquitto broker at `192.168.7.245:1883`.
 | `bathroom/humidity` | pub | SHT30 v2 ESP32 | float (%) | Bathroom relative humidity |
 | `esp/dht/b/temp` | pub | ESP8266 (simplified) | float (°C) | Bathroom temp (older sketch) |
 | `esp/dht/b/humid` | pub | ESP8266 (simplified) | float (%) | Bathroom humidity (older sketch) |
-| `esp/dht/h/temp` | pub | ESP in location H | float (°C) | Temperature, H location |
-| `esp/dht/h/hum` | pub | ESP in location H | float (%) | Humidity, H location |
-| `esp/dht/k/temp` | pub | ESP in location K | float (°C) | Temperature, K location |
-| `esp/dht/k/hum` | pub | ESP in location K | float (%) | Humidity, K location |
-| `esp/dht/k/client` | pub | ESP in location K | string | Client connection status |
+| `esp/dht/h/temp` | pub | Hall ESP | float (°C) | Hall temperature |
+| `esp/dht/h/hum` | pub | Hall ESP | float (%) | Hall humidity |
+| `esp/dht/k/temp` | pub | Kitchen ESP | float (°C) | Kitchen temperature |
+| `esp/dht/k/hum` | pub | Kitchen ESP | float (%) | Kitchen humidity |
+| `esp/dht/k/client` | pub | Kitchen ESP | string | Kitchen client connection status |
 | `lounge/temp` | pub | Lounge sensor | float (°C) | Lounge temperature |
 | `lounge/humidity` | pub | Lounge sensor | float (%) | Lounge humidity |
 | `lounge/client` | pub | Lounge sensor | string | Lounge client connection status |
+
+Topic location codes: `b` = bathroom, `h` = hall, `k` = kitchen.
 
 ### Fan control
 
