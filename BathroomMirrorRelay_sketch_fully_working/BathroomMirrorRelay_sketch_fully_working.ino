@@ -28,14 +28,6 @@ const char* hourColTopic         = "bathroom/mirror/hourCol"; //string Hex RGB
 const char* lightTopic           = "bathroom/mirror/light"; //ON or OFF
 const char* resetTopic           = "bathroom/mirror/reset"; //RESET
 
-// time
-int myYear;
-int myMonth;
-int myDay;
-int myHour;
-int myMin;
-int mySec;
-
 //state
 bool heaterState = false;
 bool lightState = true;
@@ -131,6 +123,9 @@ int fifteenMin = fiveMin*3;
 int lastMinute = 0;
 int currentMinute;
 int currentHour;
+unsigned long epoch;
+int currentDayOfMonth;
+int currentMonth;
 int minutePixel;
 int pxPerHr; //same as pixels per five minutes
 int hourPixel;
@@ -317,7 +312,7 @@ void calculatePixels(int currentHour, int currentMinute){
   Serial.print("12 hourised currentHour -> hr:");
   Serial.println(hr);
 
-  if (currentHour = 12){timeClient.update();} //recalibrate the time at midnight
+  if ((currentHour = 3) && (currentMinute == 1)){timeClient.update();} //recalibrate the time at 03:01 in morning - so daylight saving is picked up promptly
 
   hourProportion = (double)NUM_PIXELS/(double)12; // can calculate this between any two hours, I think - for this I've just used midday to 1
   Serial.print("1/12*NumPixels -> hourProportion:");
@@ -470,6 +465,8 @@ void loop() {
   //timeClient.update();
   currentHour = timeClient.getHours();
   currentMinute = timeClient.getMinutes();
+  epoch = timeClient.getEpochTime();
+  
 
   if (currentMinute != lastMinute){ //react every minute to adjust clock (draw all the pixels)
     LEDs('m');

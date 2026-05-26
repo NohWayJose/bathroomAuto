@@ -3,8 +3,8 @@
 #include <PubSubClient.h>
 
 // Update these with values suitable for your network.
-
-
+//const char* ssid = "FINBAR24";
+//const char* password = "61agwsso199ew";
 const char* ssid = "BASIL-IoT";
 const char* password = "phrdsssy57ng";
 const char* mqtt_server = "192.168.7.245";

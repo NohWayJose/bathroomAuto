@@ -1,0 +1,744 @@
+[
+    {
+        "id": "8b72e4c9a2f439e5",
+        "type": "tab",
+        "label": "Bathroom",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "ef3ff83eaafada3b",
+        "type": "mqtt in",
+        "z": "8b72e4c9a2f439e5",
+        "name": "Temperature",
+        "topic": "esp/dht/b/temp",
+        "qos": "1",
+        "datatype": "json",
+        "broker": "d232adcfdae4f31a",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "x": 390,
+        "y": 80,
+        "wires": [
+            [
+                "f84e0f488406be5a",
+                "2e77932274aae2d4",
+                "38469f49d714040b"
+            ]
+        ]
+    },
+    {
+        "id": "f84e0f488406be5a",
+        "type": "ui_gauge",
+        "z": "8b72e4c9a2f439e5",
+        "name": "BathroomTemp",
+        "group": "1bc7dc824c2874aa",
+        "order": 2,
+        "width": "1",
+        "height": "1",
+        "gtype": "gage",
+        "title": "",
+        "label": "°C",
+        "format": "{{value}}",
+        "min": 0,
+        "max": "30",
+        "colors": [
+            "#00b500",
+            "#e6e600",
+            "#ca3838"
+        ],
+        "seg1": "18",
+        "seg2": "25",
+        "className": "",
+        "x": 620,
+        "y": 80,
+        "wires": []
+    },
+    {
+        "id": "2e77932274aae2d4",
+        "type": "ui_chart",
+        "z": "8b72e4c9a2f439e5",
+        "name": "BathroomTempHistory",
+        "group": "1bc7dc824c2874aa",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "label": "Temp",
+        "chartType": "line",
+        "legend": "false",
+        "xformat": "HH:mm:ss",
+        "interpolate": "linear",
+        "nodata": "",
+        "dot": false,
+        "ymin": "0",
+        "ymax": "35",
+        "removeOlder": 1,
+        "removeOlderPoints": "",
+        "removeOlderUnit": "3600",
+        "cutout": 0,
+        "useOneColor": false,
+        "useUTC": false,
+        "colors": [
+            "#1f77b4",
+            "#aec7e8",
+            "#ff7f0e",
+            "#2ca02c",
+            "#98df8a",
+            "#d62728",
+            "#ff9896",
+            "#9467bd",
+            "#c5b0d5"
+        ],
+        "outputs": 1,
+        "useDifferentColor": false,
+        "className": "",
+        "x": 640,
+        "y": 120,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "1e4ad1236e8a9363",
+        "type": "mqtt in",
+        "z": "8b72e4c9a2f439e5",
+        "d": true,
+        "name": "",
+        "topic": "esp/dht/#",
+        "qos": "2",
+        "datatype": "auto",
+        "broker": "d232adcfdae4f31a",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "x": 400,
+        "y": 1100,
+        "wires": [
+            [
+                "9a5951e05defcdf9"
+            ]
+        ]
+    },
+    {
+        "id": "9a5951e05defcdf9",
+        "type": "debug",
+        "z": "8b72e4c9a2f439e5",
+        "d": true,
+        "name": "",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 930,
+        "y": 1100,
+        "wires": []
+    },
+    {
+        "id": "38469f49d714040b",
+        "type": "debug",
+        "z": "8b72e4c9a2f439e5",
+        "name": "Temperature",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 610,
+        "y": 40,
+        "wires": []
+    },
+    {
+        "id": "c9570e0491311b68",
+        "type": "ui_slider",
+        "z": "8b72e4c9a2f439e5",
+        "name": "Fan-on timer (mins)",
+        "label": "slider",
+        "tooltip": "",
+        "group": "b19d6a6aef08844e",
+        "order": 2,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "outs": "end",
+        "topic": "fanTimerInterval",
+        "topicType": "msg",
+        "min": "1",
+        "max": 10,
+        "step": 1,
+        "className": "",
+        "x": 1270,
+        "y": 620,
+        "wires": [
+            [
+                "ab887a36f677fbad",
+                "0f12394758bd3e82"
+            ]
+        ]
+    },
+    {
+        "id": "d41385b7559b848f",
+        "type": "comment",
+        "z": "8b72e4c9a2f439e5",
+        "name": "",
+        "info": "Passes SHT30 sensor's temperature reading and shows it on the dashboard as a large historical trace and a small instance dial/value",
+        "x": 220,
+        "y": 80,
+        "wires": []
+    },
+    {
+        "id": "08b8d633b10ab20e",
+        "type": "comment",
+        "z": "8b72e4c9a2f439e5",
+        "name": "",
+        "info": "Passes SHT30 sensor's humidity reading and shows it on the dashboard as a large historical trace and a small instance dial/value\n\nThe function node measures the humidity against a threshold value (90%) and if the reading exceeds that it turns the fan on by publishing a FanState message (picked up by the ESP8266 that controls the fan)",
+        "x": 220,
+        "y": 240,
+        "wires": []
+    },
+    {
+        "id": "31d050f97f5c1129",
+        "type": "comment",
+        "z": "8b72e4c9a2f439e5",
+        "name": "",
+        "info": "The timer triggers every 5s to make the function check if the fan mode is 'fanOn10' and if so whether the time it's been on exceeds the interval value. If the time has been exceeded it sets the timer back to 0, the mode to 'humidityTrigger' and it publishes the mode on 'esp/dht/b/fanStateNR', so the ESP with the sensor can sync its mode and LED states with the dashboard\n\nThe interval has a default of 300k ms (5min). The slider on the Dashboard chan change this flow variable between 1 & 10 mins.",
+        "x": 220,
+        "y": 400,
+        "wires": []
+    },
+    {
+        "id": "ad1983652e476e88",
+        "type": "comment",
+        "z": "8b72e4c9a2f439e5",
+        "name": "",
+        "info": "The dashboard includes a 1-10 slider. The function node sets the flow interval variable with this value * 60000.",
+        "x": 1080,
+        "y": 620,
+        "wires": []
+    },
+    {
+        "id": "7b1515e4b537caab",
+        "type": "mqtt in",
+        "z": "8b72e4c9a2f439e5",
+        "name": "Humidity",
+        "topic": "esp/dht/b/humid",
+        "qos": "0",
+        "datatype": "json",
+        "broker": "d232adcfdae4f31a",
+        "nl": false,
+        "rap": false,
+        "rh": 0,
+        "x": 400,
+        "y": 240,
+        "wires": [
+            [
+                "38986d99d372b31d",
+                "e0729cfdcfcaa9a9",
+                "ad7ba5c36dda50e6",
+                "5a3b1c94b2f52243"
+            ]
+        ]
+    },
+    {
+        "id": "480ff91b0d684a1c",
+        "type": "mqtt out",
+        "z": "8b72e4c9a2f439e5",
+        "name": "FanSwitch",
+        "topic": "bathroom/fanSwitch",
+        "qos": "2",
+        "retain": "false",
+        "respTopic": "",
+        "contentType": "text/plain",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "d232adcfdae4f31a",
+        "x": 1030,
+        "y": 280,
+        "wires": []
+    },
+    {
+        "id": "6a684d4e3c6d91d7",
+        "type": "debug",
+        "z": "8b72e4c9a2f439e5",
+        "name": "FanSwitchReport",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1050,
+        "y": 360,
+        "wires": []
+    },
+    {
+        "id": "38986d99d372b31d",
+        "type": "debug",
+        "z": "8b72e4c9a2f439e5",
+        "name": "Humidity",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 600,
+        "y": 200,
+        "wires": []
+    },
+    {
+        "id": "e0729cfdcfcaa9a9",
+        "type": "ui_gauge",
+        "z": "8b72e4c9a2f439e5",
+        "name": "BathroomHumidity",
+        "group": "e4779998dd3b61c9",
+        "order": 2,
+        "width": "1",
+        "height": "1",
+        "gtype": "gage",
+        "title": "",
+        "label": "%",
+        "format": "{{value}}",
+        "min": 0,
+        "max": "100",
+        "colors": [
+            "#00b500",
+            "#e6e600",
+            "#ca3838"
+        ],
+        "seg1": "50",
+        "seg2": "80",
+        "className": "",
+        "x": 630,
+        "y": 240,
+        "wires": []
+    },
+    {
+        "id": "ad7ba5c36dda50e6",
+        "type": "ui_chart",
+        "z": "8b72e4c9a2f439e5",
+        "name": "BathroomHumidityHistory",
+        "group": "e4779998dd3b61c9",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "label": "Humidity",
+        "chartType": "line",
+        "legend": "false",
+        "xformat": "HH:mm:ss",
+        "interpolate": "linear",
+        "nodata": "",
+        "dot": false,
+        "ymin": "",
+        "ymax": "",
+        "removeOlder": 1,
+        "removeOlderPoints": "",
+        "removeOlderUnit": "3600",
+        "cutout": 0,
+        "useOneColor": false,
+        "useUTC": false,
+        "colors": [
+            "#1f77b4",
+            "#aec7e8",
+            "#ff7f0e",
+            "#2ca02c",
+            "#98df8a",
+            "#d62728",
+            "#ff9896",
+            "#9467bd",
+            "#c5b0d5"
+        ],
+        "outputs": 1,
+        "useDifferentColor": false,
+        "className": "",
+        "x": 650,
+        "y": 280,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "360e440fcbb6dbd4",
+        "type": "mqtt in",
+        "z": "8b72e4c9a2f439e5",
+        "name": "FanStateIn",
+        "topic": "esp/dht/b/fanState",
+        "qos": "2",
+        "datatype": "auto",
+        "broker": "d232adcfdae4f31a",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "x": 400,
+        "y": 480,
+        "wires": [
+            [
+                "f1c8b9956d494710",
+                "92b01a2852bbd2c4"
+            ]
+        ]
+    },
+    {
+        "id": "fca1aba52eac712a",
+        "type": "debug",
+        "z": "8b72e4c9a2f439e5",
+        "name": "DashboardMode",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1550,
+        "y": 400,
+        "wires": []
+    },
+    {
+        "id": "d279dabf5f459856",
+        "type": "ui_dropdown",
+        "z": "8b72e4c9a2f439e5",
+        "name": "FanMode",
+        "label": "Fan mode",
+        "tooltip": "",
+        "place": "Select option",
+        "group": "b19d6a6aef08844e",
+        "order": 2,
+        "width": 0,
+        "height": 0,
+        "passthru": false,
+        "multiple": false,
+        "options": [
+            {
+                "label": "Turn fan off",
+                "value": "fanOff",
+                "type": "str"
+            },
+            {
+                "label": "Turn fan on for a few mins",
+                "value": "fanOn10",
+                "type": "str"
+            },
+            {
+                "label": "Fan on Auto (humidity > 90%)",
+                "value": "humidityTrigger",
+                "type": "str"
+            }
+        ],
+        "payload": "",
+        "topic": "DashSync",
+        "topicType": "msg",
+        "className": "",
+        "x": 1260,
+        "y": 400,
+        "wires": [
+            [
+                "fca1aba52eac712a",
+                "0f12394758bd3e82"
+            ]
+        ]
+    },
+    {
+        "id": "2501240f4c2d1391",
+        "type": "mqtt out",
+        "z": "8b72e4c9a2f439e5",
+        "name": "FanStateNR",
+        "topic": "esp/dht/b/fanStateNR",
+        "qos": "2",
+        "retain": "false",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "d232adcfdae4f31a",
+        "x": 1030,
+        "y": 460,
+        "wires": []
+    },
+    {
+        "id": "f1c8b9956d494710",
+        "type": "debug",
+        "z": "8b72e4c9a2f439e5",
+        "name": "ESPfanState",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 610,
+        "y": 540,
+        "wires": []
+    },
+    {
+        "id": "ae18377fbc948a88",
+        "type": "debug",
+        "z": "8b72e4c9a2f439e5",
+        "name": "FanStateNR",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1030,
+        "y": 520,
+        "wires": []
+    },
+    {
+        "id": "ab887a36f677fbad",
+        "type": "debug",
+        "z": "8b72e4c9a2f439e5",
+        "name": "TimerInterval(ms)",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1550,
+        "y": 680,
+        "wires": []
+    },
+    {
+        "id": "62535dbc893fc724",
+        "type": "comment",
+        "z": "8b72e4c9a2f439e5",
+        "name": "",
+        "info": "The ESP8266 with the humidity sensor also has a button to toggle between turning the fan OFF, ON for a period or let it be controlled by the humidity readings. This node uses the FanState subscription to monitor which state the ESP8266 is in and reacts accordingly\n\nThe function looks for fan mode changes and really only reacts if it detects fanOn10 (timed mode).  In this case, it starts the timer flow variable",
+        "x": 220,
+        "y": 480,
+        "wires": []
+    },
+    {
+        "id": "02437886c7b3dc14",
+        "type": "comment",
+        "z": "8b72e4c9a2f439e5",
+        "name": "",
+        "info": "The function that checks expiry of the timer interval feeds the fan mode through to the dropdown mode selector to make sure it relects the current mode. Particularly where time has expired and the mode falls back from fanOn10 to humidityTrigger \n\nThe function sets the flow variable for the fan mode, when changed from the dashboard",
+        "x": 1260,
+        "y": 360,
+        "wires": []
+    },
+    {
+        "id": "92b01a2852bbd2c4",
+        "type": "function",
+        "z": "8b72e4c9a2f439e5",
+        "name": "Fan state switch",
+        "func": "var requiredFanState    = String(flow.get('requiredFanState')) || \"humidityTrigger\";\nvar startTimer          = flow.get('startTimer') || 0;\nvar prevFanState        = String(context.get('prevFanState')) ||  \"humidityTrigger\";\nvar fanStateNR          = {payload: null, topic: 'esp/dht/b/fanStateNR'};\nvar fanSwitch          = {payload: null, topic: 'esp/dht/b/fanSwitch'};\n\nrequiredFanState        = msg.payload; \nfanStateNR.payload      = requiredFanState;\n\nif ((requiredFanState == 'humidityTrigger') && (prevFanState != 'humidityTrigger')) {\n    prevFanState = requiredFanState;\n    fanSwitch.payload   = \"OFF\";\n} else if ((requiredFanState == 'fanOff') && (prevFanState != 'fanOff')) {\n    prevFanState = requiredFanState;\n    fanSwitch.payload   = \"OFF\";\n} else if ((requiredFanState == 'fanOn10') && (startTimer == 0)  && (prevFanState != 'fanOn10')) {\n    prevFanState = requiredFanState;\n    startTimer          =  Date.now();\n    flow.set('startTimer', Date.now()); \n    fanSwitch.payload   = \"ON\";\n}    \n\n//Set persistent variables (whether changed or not)\nflow.set('requiredFanState', requiredFanState);\nflow.set('startTimer', startTimer);\ncontext.set('prevFanState', prevFanState);\n\nreturn [ fanSwitch, fanStateNR ];",
+        "outputs": 2,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 620,
+        "y": 480,
+        "wires": [
+            [
+                "480ff91b0d684a1c",
+                "6a684d4e3c6d91d7",
+                "d279dabf5f459856"
+            ],
+            [
+                "2501240f4c2d1391",
+                "ae18377fbc948a88"
+            ]
+        ]
+    },
+    {
+        "id": "5a3b1c94b2f52243",
+        "type": "function",
+        "z": "8b72e4c9a2f439e5",
+        "name": "Humidity threshold check",
+        "func": "//Gather persistent variables\nvar humidity            = flow.get('humidity') || 50;  \nvar humidityThreshold   = flow.get('humidityThreshold') || 90;\nvar requiredFanState    = String(flow.get('requiredFanState')) || \"humidityTrigger\";\nvar startTimer          = flow.get('startTimer') || 0;\nvar prevFanState        = String(flow.get('prevFanState')) ||  \"humidityTrigger\";\nvar prevFanSwitch       = String(flow.get('prevFanSwitch')) || \"OFF\";\n\n//set defaults for messages: payload & topic\n//FanSwitch is subscribed by the ESP8266 controlling the fan relay. It has valid values of 'ON' and 'OFF'\nvar fanSwitch           = {payload: null, topic: 'bathroom/fanSwitch'};\n\nhumidity = msg.payload;\n//fanSwitch.payload = prevFanSwitch;\n\nif (requiredFanState == 'humidityTrigger') { //changed to humidity\n\n    if (requiredFanState != prevFanState){ //notify once per change only\n        node.warn('fan controlled by humidity level :'+ humidityThreshold+'%');\n        prevFanState = requiredFanState;\n    }\n    \n    //monitor threshold humidity\n    if ((humidity >= humidityThreshold) && (prevFanSwitch == \"OFF\")) { //only issue OFF\n        fanSwitch.payload = 'ON';\n        prevFanSwitch = \"ON\";\n    } else if ((humidity < humidityThreshold) && (prevFanSwitch == \"ON\")){\n        fanSwitch.payload = 'OFF';\n        prevFanSwitch = \"OFF\";\n    }\n    startTimer = 0;\n    \n} else if ((requiredFanState == 'fanOff') && (prevFanState != 'fanOff')) { //the FIRST fanOff message only\n    prevFanState = requiredFanState;\n    fanSwitch.payload   = 'OFF';\n    startTimer = 0;\n    \n} else if ((requiredFanState == 'fanOn10') && (startTimer == 0)  && (prevFanState != 'fanOn10')) { //The FIRST period message only\n    prevFanState = requiredFanState;\n    startTimer          =  Date.now();\n    fanSwitch.payload   = 'ON';\n}\n\n//Set persistent variables (whether changed or not)\nflow.set('humidity', humidity);  \nflow.set('humidityThreshold', humidityThreshold);\nflow.set('requiredFanState', requiredFanState);\nflow.set('startTimer', startTimer);\nflow.set('prevFanState', prevFanState);\nflow.set('prevFanSwitch', prevFanSwitch);\nif (fanSwitch.payload != null){\n    return fanSwitch;\n}",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "// Code added here will be run once\n// whenever the node is started.\nflow.set('humidityThreshold', 90);",
+        "finalize": "",
+        "libs": [],
+        "x": 650,
+        "y": 320,
+        "wires": [
+            [
+                "480ff91b0d684a1c",
+                "6a684d4e3c6d91d7"
+            ]
+        ]
+    },
+    {
+        "id": "0f12394758bd3e82",
+        "type": "function",
+        "z": "8b72e4c9a2f439e5",
+        "name": "Dashboard management",
+        "func": "//message comes from dashboard timer slider or mode select DD\nvar fanState           = {payload: null, topic: 'esp/dht/b/fanState'};\n\nif (msg.payload * 1){  //it's a number from the timerslider\n  flow.set('fanTimerInterval', msg.payload*60000);\n} else  { //it's a string // it's a string from the mode dropdown\n  flow.set('requiredFanState', msg.payload);\n  fanState.payload = msg.payload;\n  return fanState; //Send the state into the fanStateSwitch function (as if it had come from the ESP+SHT30)\n}\n",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1570,
+        "y": 620,
+        "wires": [
+            [
+                "92b01a2852bbd2c4",
+                "52e6fe2c7206f423"
+            ]
+        ]
+    },
+    {
+        "id": "f271a7787eaad9c6",
+        "type": "inject",
+        "z": "8b72e4c9a2f439e5",
+        "name": "Check timer",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "5",
+        "crontab": "",
+        "once": true,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payloadType": "date",
+        "x": 390,
+        "y": 400,
+        "wires": [
+            [
+                "86ef298a4cc5b27f"
+            ]
+        ]
+    },
+    {
+        "id": "86ef298a4cc5b27f",
+        "type": "function",
+        "z": "8b72e4c9a2f439e5",
+        "name": "Fan Interval checker",
+        "func": "//Gather persistent variables\nvar requiredFanState    = String(flow.get('requiredFanState')) || \"humidityTrigger\";\nvar startTimer          = flow.get('startTimer') || 0;\nvar fanTimerInterval    = flow.get('fanTimerInterval') || 300000; //milliseconds (1 minute = 60000ms)\nvar fanSwitch           = {payload: null, topic: 'esp/dht/b/fanSwitch'};\nvar fanStateNR          = {payload: null, topic: 'esp/dht/b/fanStateNR'};\nvar DashSync            = {payload: null, topic: 'DashSync'};\n//var prevFanSwitch       = String(flow.get('prevFanSwitch')) || \"OFF\";\n\n//If the timer has expired, reset the timer, \n//send a message to turn the fan off and change the persistent \n//flow variable to reflect the resumed default mode\n\nif (requiredFanState == 'fanOn10') {\n        var progress = (Date.now()-startTimer);\n        node.warn('timer progress:'+ progress + 'to:'+ fanTimerInterval);\n        \n    if ((progress >=  fanTimerInterval) && (startTimer > 0)) {\n        node.warn('Resetting timer! and changing mode to: humidityTrigger');\n        startTimer          = 0;\n        flow.set('startTimer',startTimer);\n        \n        fanSwitch.payload   = 'OFF';\n        \n        requiredFanState    = \"humidityTrigger\";\n        \n        fanStateNR.payload  = requiredFanState;\n        \n        DashSync.payload    = requiredFanState;\n        \n        flow.set('requiredFanState',requiredFanState); //set the flow params on exit, when there IS change\n        flow.set('fanTimerInterval',fanTimerInterval);\n        \n        node.warn(\"timer exceeded: fanSwitch = \"+fanSwitch.payload);\n        node.warn(\"timer exceeded: fanStateNR = \"+fanStateNR.payload);\n        node.warn(\"timer exceeded: DashSync = \"+DashSync.payload);\n        \n        return [ DashSync, fanSwitch, fanStateNR ];\n        \n    }\n    flow.set('requiredFanState',requiredFanState); //set the flow params on exit, even if there's no change\n    flow.set('fanTimerInterval',fanTimerInterval);\n    //flow.set('prevFanSwitch', fanSwitch.payload);\n    return [ DashSync, fanSwitch, fanStateNR ];\n} // else if (requiredFanState == 'humidityTrigger') {\n//     fanStateNR.payload  = requiredFanState;\n//     flow.set('requiredFanState',requiredFanState); //set the flow params on exit, when there IS change\n\n\n\n",
+        "outputs": 3,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 640,
+        "y": 400,
+        "wires": [
+            [
+                "d279dabf5f459856"
+            ],
+            [
+                "480ff91b0d684a1c"
+            ],
+            [
+                "2501240f4c2d1391"
+            ]
+        ]
+    },
+    {
+        "id": "52e6fe2c7206f423",
+        "type": "debug",
+        "z": "8b72e4c9a2f439e5",
+        "name": "",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1900,
+        "y": 620,
+        "wires": []
+    },
+    {
+        "id": "d232adcfdae4f31a",
+        "type": "mqtt-broker",
+        "name": "Mosquitto",
+        "broker": "192.168.7.245",
+        "port": "1883",
+        "clientid": "",
+        "usetls": false,
+        "protocolVersion": "5",
+        "keepalive": "60",
+        "cleansession": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthPayload": "",
+        "birthMsg": {},
+        "closeTopic": "",
+        "closeQos": "0",
+        "closePayload": "",
+        "closeMsg": {},
+        "willTopic": "",
+        "willQos": "0",
+        "willPayload": "",
+        "willMsg": {},
+        "sessionExpiry": ""
+    },
+    {
+        "id": "1bc7dc824c2874aa",
+        "type": "ui_group",
+        "name": "Temp",
+        "tab": "31c7884d06c62833",
+        "order": 2,
+        "disp": true,
+        "width": "6",
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "b19d6a6aef08844e",
+        "type": "ui_group",
+        "name": "Fan",
+        "tab": "31c7884d06c62833",
+        "order": 3,
+        "disp": true,
+        "width": "6",
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "e4779998dd3b61c9",
+        "type": "ui_group",
+        "name": "Humidity",
+        "tab": "31c7884d06c62833",
+        "order": 1,
+        "disp": true,
+        "width": "6",
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "31c7884d06c62833",
+        "type": "ui_tab",
+        "name": "Bathroom",
+        "icon": "dashboard",
+        "disabled": false,
+        "hidden": false
+    }
+]
