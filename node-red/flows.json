@@ -616,7 +616,7 @@
     "page": "0cafb08f3c034873",
     "width": 6,
     "height": 1,
-    "order": 4,
+    "order": 2,
     "showTitle": true,
     "className": "",
     "visible": "true",
@@ -630,7 +630,7 @@
     "page": "0cafb08f3c034873",
     "width": 6,
     "height": 1,
-    "order": 3,
+    "order": 4,
     "showTitle": true,
     "className": "",
     "visible": "true",
@@ -640,11 +640,11 @@
   {
     "id": "8e794a90147e4290",
     "type": "ui-group",
-    "name": "Short timer",
+    "name": "Long timer",
     "page": "0cafb08f3c034873",
     "width": 6,
     "height": 1,
-    "order": 2,
+    "order": 3,
     "showTitle": true,
     "className": "",
     "visible": "true",
@@ -1169,7 +1169,7 @@
     "page": "0cafb08f3c034873",
     "width": 6,
     "height": 1,
-    "order": 5,
+    "order": 6,
     "showTitle": true,
     "className": "",
     "visible": "true",
@@ -2615,7 +2615,8 @@
     "y": 660,
     "wires": [
       [
-        "d0734fd5b01bf9e1"
+        "d0734fd5b01bf9e1",
+        "5d10d37d0c6948da"
       ]
     ]
   },
@@ -3181,8 +3182,9 @@
     "y": 200,
     "wires": [
       [
+        "73c5d9ff9842deec",
         "b2e4ebd197a93bfc",
-        "73c5d9ff9842deec"
+        "42ff64a2350945b2"
       ]
     ]
   },
@@ -3219,7 +3221,8 @@
     "wires": [
       [
         "c58d12f8745cea9f",
-        "81b173ed394adbc2"
+        "81b173ed394adbc2",
+        "8c0f81fb618a41f5"
       ]
     ]
   },
@@ -3255,8 +3258,9 @@
     "y": 460,
     "wires": [
       [
-        "be75d33e3735269e",
-        "bb3b83c200269b56"
+        "bb3b83c200269b56",
+        "a7159b1164b34980",
+        "be75d33e3735269e"
       ]
     ]
   },
@@ -6707,19 +6711,23 @@
       ],
       [
         "6f896d4c60e8b908",
-        "73c5d9ff9842deec"
+        "73c5d9ff9842deec",
+        "42ff64a2350945b2"
       ],
       [
         "df899d5d88c8e3cf",
-        "81b173ed394adbc2"
+        "81b173ed394adbc2",
+        "8c0f81fb618a41f5"
       ],
       [
         "28fbccb7c3b47839",
-        "bb3b83c200269b56"
+        "bb3b83c200269b56",
+        "a7159b1164b34980"
       ],
       [
         "734914630cf04029",
-        "d0734fd5b01bf9e1"
+        "d0734fd5b01bf9e1",
+        "5d10d37d0c6948da"
       ]
     ]
   },
@@ -6883,5 +6891,77 @@
     "x": 100,
     "y": 940,
     "wires": []
+  },
+  {
+    "id": "42ff64a2350945b2",
+    "type": "ui-template",
+    "name": "SliderTitle",
+    "group": "b98e9fbe6d175507",
+    "order": 0,
+    "width": 1,
+    "height": 1,
+    "format": "<template><div style=\"display:none\"></div></template>\n<script>\nexport default {\n  watch: {\n    msg(m) {\n      if (!m || m.payload === undefined) return;\n      const el = document.getElementById('nrdb-ui-group-b98e9fbe6d175507');\n      if (!el) return;\n      const title = el.querySelector('.v-card-title');\n      if (!title) return;\n      if (!title.dataset.orig) title.dataset.orig = title.textContent.trim();\n      title.textContent = title.dataset.orig + ' - ' + m.payload + '%';\n    }\n  }\n}\n</script>",
+    "storeOutMessages": true,
+    "passthru": true,
+    "resendOnRefresh": true,
+    "templateScope": "local",
+    "className": "",
+    "wires": [
+      []
+    ]
+  },
+  {
+    "id": "8c0f81fb618a41f5",
+    "type": "ui-template",
+    "name": "SliderTitle",
+    "group": "42109dff0ff25656",
+    "order": 0,
+    "width": 1,
+    "height": 1,
+    "format": "<template><div style=\"display:none\"></div></template>\n<script>\nexport default {\n  watch: {\n    msg(m) {\n      if (!m || m.payload === undefined) return;\n      const el = document.getElementById('nrdb-ui-group-42109dff0ff25656');\n      if (!el) return;\n      const title = el.querySelector('.v-card-title');\n      if (!title) return;\n      if (!title.dataset.orig) title.dataset.orig = title.textContent.trim();\n      title.textContent = title.dataset.orig + ' - ' + m.payload + ' min';\n    }\n  }\n}\n</script>",
+    "storeOutMessages": true,
+    "passthru": true,
+    "resendOnRefresh": true,
+    "templateScope": "local",
+    "className": "",
+    "wires": [
+      []
+    ]
+  },
+  {
+    "id": "a7159b1164b34980",
+    "type": "ui-template",
+    "name": "SliderTitle",
+    "group": "8e794a90147e4290",
+    "order": 0,
+    "width": 1,
+    "height": 1,
+    "format": "<template><div style=\"display:none\"></div></template>\n<script>\nexport default {\n  watch: {\n    msg(m) {\n      if (!m || m.payload === undefined) return;\n      const el = document.getElementById('nrdb-ui-group-8e794a90147e4290');\n      if (!el) return;\n      const title = el.querySelector('.v-card-title');\n      if (!title) return;\n      if (!title.dataset.orig) title.dataset.orig = title.textContent.trim();\n      title.textContent = title.dataset.orig + ' - ' + m.payload + ' min';\n    }\n  }\n}\n</script>",
+    "storeOutMessages": true,
+    "passthru": true,
+    "resendOnRefresh": true,
+    "templateScope": "local",
+    "className": "",
+    "wires": [
+      []
+    ]
+  },
+  {
+    "id": "5d10d37d0c6948da",
+    "type": "ui-template",
+    "name": "SliderTitle",
+    "group": "411b957797d79671",
+    "order": 0,
+    "width": 1,
+    "height": 1,
+    "format": "<template><div style=\"display:none\"></div></template>\n<script>\nexport default {\n  watch: {\n    msg(m) {\n      if (!m || m.payload === undefined) return;\n      const el = document.getElementById('nrdb-ui-group-411b957797d79671');\n      if (!el) return;\n      const title = el.querySelector('.v-card-title');\n      if (!title) return;\n      if (!title.dataset.orig) title.dataset.orig = title.textContent.trim();\n      title.textContent = title.dataset.orig + ' - ' + m.payload + ' h';\n    }\n  }\n}\n</script>",
+    "storeOutMessages": true,
+    "passthru": true,
+    "resendOnRefresh": true,
+    "templateScope": "local",
+    "className": "",
+    "wires": [
+      []
+    ]
   }
 ]
