@@ -7045,7 +7045,7 @@
     "type": "function",
     "z": "a0ebd549a544bb25",
     "name": "NightStart",
-    "func": "const now = new Date();\nconst times = SunCalc.getTimes(now, 50.9097, -1.4044);\nconst delayHours = global.get('nightModeDelay') ?? 0;\nconst nightStart = new Date(times.sunset.getTime() + delayHours * 3600000);\n\nfunction doSwitch() {\n    global.set('preNightTheme', global.get('currentTheme'));\n    global.set('nightModeActive', true);\n    node.send({ payload: 'Night' });\n}\n\nconst msDelay = nightStart - now;\nif (msDelay <= 0) {\n    doSwitch();\n} else {\n    setTimeout(doSwitch, msDelay);\n}\nreturn null;\n",
+    "func": "const now = new Date();\nconst times = SunCalc.getTimes(now, 50.9097, -1.4044);\nconst delayHours = global.get('nightModeDelay') ?? 0;\nconst nightStart = new Date(times.sunset.getTime() + delayHours * 3600000);\n\nfunction doSwitch() {\n    if (!global.get('nightModeActive')) {\n        global.set('preNightTheme', global.get('currentTheme'));\n    }\n    global.set('nightModeActive', true);\n    node.send({ payload: 'Night' });\n}\n\nconst msDelay = nightStart - now;\nif (msDelay <= 0) {\n    doSwitch();\n} else {\n    setTimeout(doSwitch, msDelay);\n}\nreturn null;\n",
     "outputs": 1,
     "libs": [
       {
@@ -7064,7 +7064,7 @@
     "type": "function",
     "z": "a0ebd549a544bb25",
     "name": "SunriseReturn",
-    "func": "if (!global.get('nightModeActive')) return null;\nglobal.set('nightModeActive', false);\nconst themes = global.get('bathroomThemes') || {};\nconst returnTheme = global.get('preNightTheme') || Object.keys(themes)[0];\nreturn { payload: returnTheme };\n",
+    "func": "if (!global.get('nightModeActive')) return null;\nglobal.set('nightModeActive', false);\nconst themes = global.get('bathroomThemes') || {};\nconst saved = global.get('preNightTheme');\nconst themeNames = Object.keys(themes);\nconst returnTheme = (saved && saved !== 'Night')\n    ? saved\n    : (themeNames.find(t => t !== 'Night') || themeNames[0]);\nreturn { payload: returnTheme };\n",
     "outputs": 1,
     "libs": [],
     "wires": [
@@ -7095,7 +7095,7 @@
     "type": "function",
     "z": "a0ebd549a544bb25",
     "name": "StartupNightCheck",
-    "func": "const now = new Date();\nconst times = SunCalc.getTimes(now, 50.9097, -1.4044);\nconst delayHours = global.get('nightModeDelay') ?? 0;\nconst nightStart = new Date(times.sunset.getTime() + delayHours * 3600000);\nconst isNight = (now >= nightStart) || (now < times.sunrise);\nconst wasNight = global.get('nightModeActive') || false;\n\nif (isNight && !wasNight) {\n    global.set('preNightTheme', global.get('currentTheme'));\n    global.set('nightModeActive', true);\n    return { payload: 'Night' };\n}\nif (!isNight && wasNight) {\n    global.set('nightModeActive', false);\n    const themes = global.get('bathroomThemes') || {};\n    return { payload: global.get('preNightTheme') || Object.keys(themes)[0] };\n}\nreturn null;\n",
+    "func": "const now = new Date();\nconst times = SunCalc.getTimes(now, 50.9097, -1.4044);\nconst delayHours = global.get('nightModeDelay') ?? 0;\nconst nightStart = new Date(times.sunset.getTime() + delayHours * 3600000);\nconst isNight = (now >= nightStart) || (now < times.sunrise);\nconst wasNight = global.get('nightModeActive') || false;\nconst themes = global.get('bathroomThemes') || {};\nconst themeNames = Object.keys(themes);\n\nfunction safeDayTheme() {\n    const saved = global.get('preNightTheme');\n    return (saved && saved !== 'Night')\n        ? saved\n        : (themeNames.find(t => t !== 'Night') || themeNames[0]);\n}\n\nif (isNight && !wasNight) {\n    global.set('preNightTheme', global.get('currentTheme'));\n    global.set('nightModeActive', true);\n    return { payload: 'Night' };\n}\nif (!isNight && wasNight) {\n    global.set('nightModeActive', false);\n    return { payload: safeDayTheme() };\n}\nreturn null;\n",
     "outputs": 1,
     "libs": [
       {
