@@ -7060,7 +7060,7 @@
     "height": "1",
     "order": 3,
     "showTitle": true,
-    "className": "",
+    "className": "recip-group",
     "visible": "true"
   },
   {
@@ -7367,5 +7367,35 @@
         "fn-reload"
       ]
     ]
+  },
+  {
+    "id": "grp-glucose-style",
+    "type": "ui-group",
+    "z": "589703a0ac254105",
+    "name": "GlucoseStyleFix",
+    "page": "f1be50d8b33e8654",
+    "width": "1",
+    "height": "1",
+    "order": 99,
+    "showTitle": false,
+    "className": "glucose-style-hidden",
+    "visible": "true"
+  },
+  {
+    "id": "tmpl-glucose-recip-fix",
+    "type": "ui-template",
+    "z": "589703a0ac254105",
+    "group": "grp-glucose-style",
+    "name": "RecipTableFix",
+    "order": 1,
+    "width": 1,
+    "height": 1,
+    "templateScope": "local",
+    "resendOnRefresh": true,
+    "storeOutMessages": false,
+    "passthru": false,
+    "className": "",
+    "wires": [],
+    "format": "<template>\n  <div></div>\n</template>\n\n<script>\nexport default {\n  mounted () {\n    let hide = document.getElementById('glucose-style-hide')\n    if (!hide) { hide = document.createElement('style'); hide.id = 'glucose-style-hide'; document.head.appendChild(hide) }\n    hide.textContent = '.glucose-style-hidden{display:none!important}'\n\n    let fix = document.getElementById('recip-table-fix')\n    if (!fix) { fix = document.createElement('style'); fix.id = 'recip-table-fix'; document.head.appendChild(fix) }\n    fix.textContent = `\n      .recip-group { height:auto!important; min-height:220px; }\n      .recip-group .nrdb-ui-widget-table,\n      .recip-group .nrdb-ui-widget-table > div { height:auto!important; max-height:none!important; overflow:visible!important; }\n      .recip-group .v-table__wrapper { overflow:visible!important; height:auto!important; }\n    `\n  }\n}\n</script>"
   }
 ]
