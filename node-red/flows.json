@@ -1124,7 +1124,8 @@
     "port": "3306",
     "db": "glucose",
     "tz": "",
-    "charset": "UTF8"
+    "charset": "UTF8",
+    "user": "nodered"
   },
   {
     "id": "525fc17f8bc66d86",
@@ -1134,7 +1135,8 @@
     "port": "3306",
     "db": "glucose",
     "tz": "",
-    "charset": "UTF8"
+    "charset": "UTF8",
+    "user": "nodered"
   },
   {
     "id": "dc491e2c427044e1",
@@ -4794,7 +4796,7 @@
     "type": "function",
     "z": "d194cc9a6cbe9111",
     "name": "Daily archive sweep",
-    "func": "const ARCHIVE_DIR = '/opensesameArchives';\nconst ARCHIVE_FILE = path.join(ARCHIVE_DIR, 'opensesameArchive.csv');\nconst STATE_FILE = path.join(ARCHIVE_DIR, 'opensesameState.txt');\nconst now = Date.now();\nconst d7 = 7 * 24 * 60 * 60 * 1000;\nconst d60 = 60 * 24 * 60 * 60 * 1000;\n\nfunction saveState(table) {\n    fs.mkdirSync(ARCHIVE_DIR, { recursive: true });\n    const tempFile = `${STATE_FILE}.tmp`;\n    fs.writeFileSync(tempFile, `${JSON.stringify(table)}\\n`, 'utf8');\n    fs.renameSync(tempFile, STATE_FILE);\n}\n\nfunction esc(value) {\n    const stringValue = (value ?? '').toString();\n    return /[\",\\n]/.test(stringValue) ? `\"${stringValue.replace(/\"/g, '\"\"')}\"` : stringValue;\n}\n\nfunction parseCsvLine(line) {\n    const out = [];\n    let current = '';\n    let quoted = false;\n\n    for (let index = 0; index < line.length; index++) {\n        const char = line[index];\n        if (quoted) {\n            if (char === '\"' && line[index + 1] === '\"') {\n                current += '\"';\n                index++;\n            } else if (char === '\"') {\n                quoted = false;\n            } else {\n                current += char;\n            }\n        } else if (char === '\"') {\n            quoted = true;\n        } else if (char === ',') {\n            out.push(current);\n            current = '';\n        } else {\n            current += char;\n        }\n    }\n\n    out.push(current);\n    return out;\n}\n\nfs.mkdirSync(ARCHIVE_DIR, { recursive: true });\n\nlet table = flow.get('tableData') || [];\nconst aged = table.filter((row) => row.createdAt && (now - new Date(row.createdAt).getTime()) > d7);\nconst fresh = table.filter((row) => !row.createdAt || (now - new Date(row.createdAt).getTime()) <= d7);\nflow.set('tableData', fresh);\n\ntry {\n    saveState(fresh);\n} catch (err) {\n    node.error(`Unable to persist archive sweep state: ${err.message}`, msg);\n    return null;\n}\n\nlet keptRows = [];\nif (fs.existsSync(ARCHIVE_FILE)) {\n    const lines = fs.readFileSync(ARCHIVE_FILE, 'utf8').split('\\n').filter(Boolean);\n    for (const line of lines.slice(1)) {\n        const cols = parseCsvLine(line);\n        const createdAt = cols[4] || cols[3] || '';\n        const timestamp = new Date(createdAt).getTime();\n        if (!createdAt || (Number.isFinite(timestamp) && (now - timestamp) <= d60)) {\n            keptRows.push(cols);\n        }\n    }\n}\n\nconst newRows = aged.map((row) => [row.companyName || '', row.code || '', row.event || '', row.timestamp || '', row.createdAt || '']);\nconst allRows = keptRows.concat(newRows);\nconst header = 'companyName,code,event,timestamp,createdAt';\nconst body = allRows.map((row) => row.map(esc).join(',')).join('\\n');\nfs.writeFileSync(ARCHIVE_FILE, header + (body ? `\\n${body}\\n` : '\\n'), 'utf8');\n\nmsg.payload = fresh;\nreturn msg;",
+    "func": "const ARCHIVE_DIR = '/opensesameArchives';\nconst ARCHIVE_FILE = path.join(ARCHIVE_DIR, 'opensesameArchive.csv');\nconst STATE_FILE = path.join(ARCHIVE_DIR, 'opensesameState.txt');\nconst now = Date.now();\nconst d7 = 7 * 24 * 60 * 60 * 1000;\nconst d60 = 60 * 24 * 60 * 60 * 1000;\n\nfunction saveState(table) {\n    fs.mkdirSync(ARCHIVE_DIR, { recursive: true });\n    const tempFile = `${STATE_FILE}.tmp`;\n    fs.writeFileSync(tempFile, `${JSON.stringify(table)}\\n`, 'utf8');\n    fs.renameSync(tempFile, STATE_FILE);\n}\n\nfunction esc(value) {\n    const stringValue = (value ?? '').toString();\n    return /[\",\\n]/.test(stringValue) ? `\"${stringValue.replace(/\"/g, '\"\"')}\"` : stringValue;\n}\n\nfunction parseCsvLine(line) {\n    const out = [];\n    let current = '';\n    let quoted = false;\n\n    for (let index = 0; index < line.length; index++) {\n        const char = line[index];\n        if (quoted) {\n            if (char === '\"' && line[index + 1] === '\"') {\n                current += '\"';\n                index++;\n            } else if (char === '\"') {\n                quoted = false;\n            } else {\n                current += char;\n            }\n        } else if (char === '\"') {\n            quoted = true;\n        } else if (char === ',') {\n            out.push(current);\n            current = '';\n        } else {\n            current += char;\n        }\n    }\n\n    out.push(current);\n    return out;\n}\n\nfs.mkdirSync(ARCHIVE_DIR, { recursive: true });\n\nlet table = flow.get('tableData') || [];\n// Sticky codes are never aged out \u2014 only non-sticky codes older than 7 days\nconst aged = table.filter((row) => !row.sticky && row.createdAt && (now - new Date(row.createdAt).getTime()) > d7);\nconst fresh = table.filter((row) => row.sticky || !row.createdAt || (now - new Date(row.createdAt).getTime()) <= d7);\nflow.set('tableData', fresh);\n\ntry {\n    saveState(fresh);\n} catch (err) {\n    node.error(`Unable to persist archive sweep state: ${err.message}`, msg);\n    return null;\n}\n\nlet keptRows = [];\nif (fs.existsSync(ARCHIVE_FILE)) {\n    const lines = fs.readFileSync(ARCHIVE_FILE, 'utf8').split('\\n').filter(Boolean);\n    for (const line of lines.slice(1)) {\n        const cols = parseCsvLine(line);\n        const createdAt = cols[4] || cols[3] || '';\n        const timestamp = new Date(createdAt).getTime();\n        if (!createdAt || (Number.isFinite(timestamp) && (now - timestamp) <= d60)) {\n            keptRows.push(cols);\n        }\n    }\n}\n\nconst newRows = aged.map((row) => [row.companyName || '', row.code || '', row.event || '', row.timestamp || '', row.createdAt || '']);\nconst allRows = keptRows.concat(newRows);\nconst header = 'companyName,code,event,timestamp,createdAt';\nconst body = allRows.map((row) => row.map(esc).join(',')).join('\\n');\nfs.writeFileSync(ARCHIVE_FILE, header + (body ? `\\n${body}\\n` : '\\n'), 'utf8');\n\nmsg.payload = fresh;\nreturn msg;",
     "outputs": 1,
     "timeout": "",
     "noerr": 0,
@@ -6022,7 +6024,7 @@
     "z": "589703a0ac254105",
     "group": "dc491e2c427044e1",
     "name": "",
-    "label": "Nurse email",
+    "label": "Recipient email",
     "order": 1,
     "width": "6",
     "height": "1",
@@ -6135,78 +6137,13 @@
         "type": "str"
       },
       {
-        "label": "15 days",
-        "value": "15",
-        "type": "str"
-      },
-      {
-        "label": "16 days",
-        "value": "16",
-        "type": "str"
-      },
-      {
-        "label": "17 days",
-        "value": "17",
-        "type": "str"
-      },
-      {
-        "label": "18 days",
-        "value": "18",
-        "type": "str"
-      },
-      {
-        "label": "19 days",
-        "value": "19",
-        "type": "str"
-      },
-      {
-        "label": "20 days",
-        "value": "20",
-        "type": "str"
-      },
-      {
         "label": "21 days",
         "value": "21",
         "type": "str"
       },
       {
-        "label": "22 days",
-        "value": "22",
-        "type": "str"
-      },
-      {
-        "label": "23 days",
-        "value": "23",
-        "type": "str"
-      },
-      {
-        "label": "24 days",
-        "value": "24",
-        "type": "str"
-      },
-      {
-        "label": "25 days",
-        "value": "25",
-        "type": "str"
-      },
-      {
-        "label": "26 days",
-        "value": "26",
-        "type": "str"
-      },
-      {
-        "label": "27 days",
-        "value": "27",
-        "type": "str"
-      },
-      {
         "label": "28 days",
         "value": "28",
-        "type": "str"
-      },
-      {
-        "label": "29 days",
-        "value": "29",
         "type": "str"
       },
       {
@@ -6238,12 +6175,12 @@
     "type": "ui-button",
     "z": "589703a0ac254105",
     "group": "bcb99f0e6630e1f3",
-    "label": "Send Report Now",
+    "label": "Send Now",
     "order": 1,
-    "width": "3",
+    "width": "2",
     "height": "1",
     "emulateClick": false,
-    "tooltip": "",
+    "tooltip": "Select a recipient row first",
     "color": "",
     "bgcolor": "",
     "className": "",
@@ -6318,7 +6255,7 @@
     "type": "function",
     "z": "589703a0ac254105",
     "name": "Build SQL",
-    "func": "\nvar days = flow.get('periodDays') || 7;\nvar nurseEmail = flow.get('nurseEmail') || '';\nif (!nurseEmail || nurseEmail.indexOf('@') < 0) { node.error(\"Set nurse email first\"); return null; }\nmsg.days = days; msg.nurseEmail = nurseEmail;\nmsg.topic = \"SELECT ts, mgdl, mmol, FROM_UNIXTIME(ts/1000,'%Y-%m-%d') AS day FROM readings WHERE ts > (UNIX_TIMESTAMP()-\"+(days*86400)+\")*1000 ORDER BY ts ASC\";\nmsg.payload = null; return msg;\n",
+    "func": "\nvar id = parseInt(flow.get('selectedRecipientId'));\nif (!id) { node.error('Select a recipient from the list first'); return null; }\nvar days = flow.get('periodDays') || 7;\nvar nurseEmail = (flow.get('nurseEmail') || '').trim();\nif (!nurseEmail || nurseEmail.indexOf('@') < 0) { node.error('No recipient selected'); return null; }\nmsg.days = days; msg.nurseEmail = nurseEmail; msg.recipientId = id;\nmsg.topic = \"SELECT ts, mgdl, mmol, FROM_UNIXTIME(ts/1000,'%Y-%m-%d') AS day FROM readings WHERE ts > (UNIX_TIMESTAMP()-\"+(days*86400)+\")*1000 ORDER BY ts ASC\";\nmsg.payload = null; return msg;\n",
     "outputs": 1,
     "timeout": "",
     "noerr": 0,
@@ -6401,14 +6338,14 @@
     "id": "351bce99b39d3ca6",
     "type": "function",
     "z": "589703a0ac254105",
-    "name": "Check if due",
-    "func": "\nvar days=flow.get('periodDays')||7, email=flow.get('nurseEmail')||'';\nvar last=flow.get('lastSentMs')||0, now=Date.now();\nif(!email||email.indexOf('@')<0) return null;\nif(now-last >= days*86400000){\n  msg.days=days; msg.nurseEmail=email;\n  msg.topic=\"SELECT ts,mgdl,mmol,FROM_UNIXTIME(ts/1000,'%Y-%m-%d') AS day FROM readings WHERE ts>(UNIX_TIMESTAMP()-\"+(days*86400)+\")*1000 ORDER BY ts ASC\";\n  msg.payload=null; return msg;\n} return null;\n",
+    "name": "Get due recipients SQL",
+    "func": "\nmsg.topic = 'SELECT id, email, cadence_days FROM report_recipients WHERE next_send_ms <= ' + Date.now() + ' OR next_send_ms = 0';\nmsg.payload = null;\nreturn msg;\n",
     "outputs": 1,
-    "x": 340,
+    "x": 360,
     "y": 400,
     "wires": [
       [
-        "bd29734313d54e88"
+        "mysql-recip-due"
       ]
     ]
   },
@@ -6419,7 +6356,7 @@
     "mydb": "525fc17f8bc66d86",
     "name": "Query",
     "x": 520,
-    "y": 400,
+    "y": 460,
     "wires": [
       [
         "2be07168e18bb0eb"
@@ -6431,10 +6368,10 @@
     "type": "function",
     "z": "589703a0ac254105",
     "name": "Stats + format email",
-    "func": "\nvar data=msg.payload;\nif(!data||!data.length){node.error(\"No readings in period\");return null;}\nvar days=msg.days,nurseEmail=msg.nurseEmail,n=data.length,sumM=0,minM=99,maxM=0,inR=0,ab=0,be=0,daily={};\ndata.forEach(function(r){\n  var m=parseFloat(r.mmol); sumM+=m; if(m<minM)minM=m; if(m>maxM)maxM=m;\n  if(m>=4&&m<=10)inR++; else if(m>10)ab++; else be++;\n  var d=r.day; if(!daily[d])daily[d]={s:0,c:0,mn:99,mx:0,ir:0};\n  daily[d].s+=m; daily[d].c++; if(m<daily[d].mn)daily[d].mn=m; if(m>daily[d].mx)daily[d].mx=m;\n  if(m>=4&&m<=10)daily[d].ir++;\n});\nvar avg=sumM/n, avgMg=avg*18.02, hba1c=((avgMg+46.7)/28.7).toFixed(1);\nvar tir=Math.round(inR/n*100), tor=Math.round(ab/n*100), tbr=Math.round(be/n*100);\nvar start=new Date(data[0].ts), end=new Date(data[n-1].ts);\nvar fmt=function(d){return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});};\nvar rows=Object.keys(daily).sort().map(function(d){\n  var v=daily[d],da=(v.s/v.c).toFixed(1),dt=Math.round(v.ir/v.c*100);\n  return '<tr><td style=\"padding:4px 8px\">'+d+'</td><td style=\"padding:4px 8px;text-align:center\">'+da+'</td><td style=\"padding:4px 8px;text-align:center\">'+v.mn.toFixed(1)+'</td><td style=\"padding:4px 8px;text-align:center\">'+v.mx.toFixed(1)+'</td><td style=\"padding:4px 8px;text-align:center\">'+dt+'%</td></tr>';\n}).join('');\nvar html='<!DOCTYPE html><html><body style=\"font-family:Arial,sans-serif;max-width:620px;margin:0 auto\">'+\n'<h2 style=\"color:#2c5282\">Glucose Summary Report</h2>'+\n'<p><b>Period:</b> '+fmt(start)+' to '+fmt(end)+' ('+days+' days) &nbsp; <b>Readings:</b> '+n+'</p>'+\n'<h3 style=\"color:#2c5282\">Summary</h3>'+\n'<table style=\"border-collapse:collapse;width:100%\">'+\n'<tr style=\"background:#ebf8ff\"><td style=\"padding:6px 12px\"><b>Average</b></td><td style=\"padding:6px 12px\">'+avg.toFixed(1)+' mmol/L ('+Math.round(avgMg)+' mg/dL)</td></tr>'+\n'<tr><td style=\"padding:6px 12px\"><b>Min / Max</b></td><td style=\"padding:6px 12px\">'+minM.toFixed(1)+' / '+maxM.toFixed(1)+' mmol/L</td></tr>'+\n'<tr style=\"background:#ebf8ff\"><td style=\"padding:6px 12px\"><b>Est. HbA1c</b></td><td style=\"padding:6px 12px\">'+hba1c+'%</td></tr>'+\n'</table>'+\n'<h3 style=\"color:#2c5282\">Time in Range</h3>'+\n'<table style=\"border-collapse:collapse;width:100%\">'+\n'<tr style=\"background:#c6f6d5\"><td style=\"padding:6px 12px\"><b>In range (4-10 mmol/L)</b></td><td style=\"padding:6px 12px;text-align:right\"><b>'+tir+'%</b></td></tr>'+\n'<tr style=\"background:#fed7d7\"><td style=\"padding:6px 12px\">Above range (&gt;10)</td><td style=\"padding:6px 12px;text-align:right\">'+tor+'%</td></tr>'+\n'<tr style=\"background:#bee3f8\"><td style=\"padding:6px 12px\">Below range (&lt;4)</td><td style=\"padding:6px 12px;text-align:right\">'+tbr+'%</td></tr>'+\n'</table>'+\n'<h3 style=\"color:#2c5282\">Daily Breakdown</h3>'+\n'<table style=\"border-collapse:collapse;width:100%;font-size:0.9em\">'+\n'<tr style=\"background:#2c5282;color:white\"><th style=\"padding:6px 8px;text-align:left\">Date</th><th style=\"padding:6px 8px\">Avg</th><th style=\"padding:6px 8px\">Min</th><th style=\"padding:6px 8px\">Max</th><th style=\"padding:6px 8px\">In Range</th></tr>'+\nrows+\n'</table>'+\n'<p style=\"margin-top:20px;color:#718096;font-size:0.8em\">Generated '+new Date().toLocaleString(\"en-GB\")+'. HbA1c estimated from average glucose.</p>'+\n'</body></html>';\nmsg.to=nurseEmail; msg.cc=\"greg@lubel.me\";\nmsg.topic=\"Glucose Summary - Last \"+days+\" days to \"+fmt(end);\nmsg.payload=html;\nreturn msg;\n",
+    "func": "\nvar data=msg.payload;\nif(!data||!data.length){node.error('No readings in period');return null;}\nvar days=msg.days,nurseEmail=msg.nurseEmail,recipientId=msg.recipientId,n=data.length,sumM=0,minM=99,maxM=0,inR=0,ab=0,be=0,daily={};\ndata.forEach(function(r){\n  var m=parseFloat(r.mmol); sumM+=m; if(m<minM)minM=m; if(m>maxM)maxM=m;\n  if(m>=4&&m<=10)inR++; else if(m>10)ab++; else be++;\n  var d=r.day; if(!daily[d])daily[d]={s:0,c:0,mn:99,mx:0,ir:0};\n  daily[d].s+=m; daily[d].c++; if(m<daily[d].mn)daily[d].mn=m; if(m>daily[d].mx)daily[d].mx=m;\n  if(m>=4&&m<=10)daily[d].ir++;\n});\nvar avg=sumM/n, avgMg=avg*18.02, hba1c=((avgMg+46.7)/28.7).toFixed(1);\nvar tir=Math.round(inR/n*100), tor=Math.round(ab/n*100), tbr=Math.round(be/n*100);\nvar start=new Date(data[0].ts), end=new Date(data[n-1].ts);\nvar fmt=function(d){return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});};\nvar rows=Object.keys(daily).sort().map(function(d){\n  var v=daily[d],da=(v.s/v.c).toFixed(1),dt=Math.round(v.ir/v.c*100);\n  return '<tr><td style=\"padding:4px 8px\">'+d+'</td><td style=\"padding:4px 8px;text-align:center\">'+da+'</td><td style=\"padding:4px 8px;text-align:center\">'+v.mn.toFixed(1)+'</td><td style=\"padding:4px 8px;text-align:center\">'+v.mx.toFixed(1)+'</td><td style=\"padding:4px 8px;text-align:center\">'+dt+'%</td></tr>';\n}).join('');\nvar html='<!DOCTYPE html><html><body style=\"font-family:Arial,sans-serif;max-width:620px;margin:0 auto\">'+\n'<h2 style=\"color:#2c5282\">Glucose Summary Report</h2>'+\n'<p><b>Period:</b> '+fmt(start)+' to '+fmt(end)+' ('+days+' days) &nbsp; <b>Readings:</b> '+n+'</p>'+\n'<h3 style=\"color:#2c5282\">Summary</h3>'+\n'<table style=\"border-collapse:collapse;width:100%\">'+\n'<tr style=\"background:#ebf8ff\"><td style=\"padding:6px 12px\"><b>Average</b></td><td style=\"padding:6px 12px\">'+avg.toFixed(1)+' mmol/L ('+Math.round(avgMg)+' mg/dL)</td></tr>'+\n'<tr><td style=\"padding:6px 12px\"><b>Min / Max</b></td><td style=\"padding:6px 12px\">'+minM.toFixed(1)+' / '+maxM.toFixed(1)+' mmol/L</td></tr>'+\n'<tr style=\"background:#ebf8ff\"><td style=\"padding:6px 12px\"><b>Est. HbA1c</b></td><td style=\"padding:6px 12px\">'+hba1c+'%</td></tr>'+\n'</table>'+\n'<h3 style=\"color:#2c5282\">Time in Range</h3>'+\n'<table style=\"border-collapse:collapse;width:100%\">'+\n'<tr style=\"background:#c6f6d5\"><td style=\"padding:6px 12px\"><b>In range (4-10 mmol/L)</b></td><td style=\"padding:6px 12px;text-align:right\"><b>'+tir+'%</b></td></tr>'+\n'<tr style=\"background:#fed7d7\"><td style=\"padding:6px 12px\">Above range (&gt;10)</td><td style=\"padding:6px 12px;text-align:right\">'+tor+'%</td></tr>'+\n'<tr style=\"background:#bee3f8\"><td style=\"padding:6px 12px\">Below range (&lt;4)</td><td style=\"padding:6px 12px;text-align:right\">'+tbr+'%</td></tr>'+\n'</table>'+\n'<h3 style=\"color:#2c5282\">Daily Breakdown</h3>'+\n'<table style=\"border-collapse:collapse;width:100%;font-size:0.9em\">'+\n'<tr style=\"background:#2c5282;color:white\"><th style=\"padding:6px 8px;text-align:left\">Date</th><th style=\"padding:6px 8px\">Avg</th><th style=\"padding:6px 8px\">Min</th><th style=\"padding:6px 8px\">Max</th><th style=\"padding:6px 8px\">In Range</th></tr>'+\nrows+\n'</table>'+\n'<p style=\"margin-top:20px;color:#718096;font-size:0.8em\">Generated '+new Date().toLocaleString('en-GB')+'. HbA1c estimated from average glucose.</p>'+\n'</body></html>';\nmsg.to=nurseEmail; msg.cc='your@email.com';\nmsg.topic='Glucose Summary - Last '+days+' days to '+fmt(end);\nmsg.payload=html;\nmsg.recipientId=recipientId;\nreturn msg;\n",
     "outputs": 1,
     "x": 360,
-    "y": 460,
+    "y": 520,
     "wires": [
       [
         "28a2b60468b684e1"
@@ -6445,25 +6382,29 @@
     "id": "28a2b60468b684e1",
     "type": "e-mail",
     "z": "589703a0ac254105",
-    "server": "192.168.7.7",
+    "server": "192.168.x.x",
     "port": "2525",
     "authtype": "BASIC",
     "saslformat": false,
     "token": "oauth2Response.access_token",
     "secure": false,
     "tls": false,
-    "name": "greg@lubel.me",
-    "dname": "Protonmail",
+    "name": "Your email",
+    "dname": "Your SMTP relay",
     "x": 970,
     "y": 420,
-    "wires": []
+    "wires": [
+      [
+        "fn-upd-lastsent"
+      ]
+    ]
   },
   {
     "id": "e09fb184ae90a34b",
     "type": "function",
     "z": "589703a0ac254105",
     "name": "Stats + format email",
-    "func": "\nvar data=msg.payload;\nif(!data||!data.length){node.error(\"No readings in period\");return null;}\nvar days=msg.days,nurseEmail=msg.nurseEmail,n=data.length,sumM=0,minM=99,maxM=0,inR=0,ab=0,be=0,daily={};\ndata.forEach(function(r){\n  var m=parseFloat(r.mmol); sumM+=m; if(m<minM)minM=m; if(m>maxM)maxM=m;\n  if(m>=4&&m<=10)inR++; else if(m>10)ab++; else be++;\n  var d=r.day; if(!daily[d])daily[d]={s:0,c:0,mn:99,mx:0,ir:0};\n  daily[d].s+=m; daily[d].c++; if(m<daily[d].mn)daily[d].mn=m; if(m>daily[d].mx)daily[d].mx=m;\n  if(m>=4&&m<=10)daily[d].ir++;\n});\nvar avg=sumM/n, avgMg=avg*18.02, hba1c=((avgMg+46.7)/28.7).toFixed(1);\nvar tir=Math.round(inR/n*100), tor=Math.round(ab/n*100), tbr=Math.round(be/n*100);\nvar start=new Date(data[0].ts), end=new Date(data[n-1].ts);\nvar fmt=function(d){return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});};\nvar rows=Object.keys(daily).sort().map(function(d){\n  var v=daily[d],da=(v.s/v.c).toFixed(1),dt=Math.round(v.ir/v.c*100);\n  return '<tr><td style=\"padding:4px 8px\">'+d+'</td><td style=\"padding:4px 8px;text-align:center\">'+da+'</td><td style=\"padding:4px 8px;text-align:center\">'+v.mn.toFixed(1)+'</td><td style=\"padding:4px 8px;text-align:center\">'+v.mx.toFixed(1)+'</td><td style=\"padding:4px 8px;text-align:center\">'+dt+'%</td></tr>';\n}).join('');\nvar html='<!DOCTYPE html><html><body style=\"font-family:Arial,sans-serif;max-width:620px;margin:0 auto\">'+\n'<h2 style=\"color:#2c5282\">Glucose Summary Report</h2>'+\n'<p><b>Period:</b> '+fmt(start)+' to '+fmt(end)+' ('+days+' days) &nbsp; <b>Readings:</b> '+n+'</p>'+\n'<h3 style=\"color:#2c5282\">Summary</h3>'+\n'<table style=\"border-collapse:collapse;width:100%\">'+\n'<tr style=\"background:#ebf8ff\"><td style=\"padding:6px 12px\"><b>Average</b></td><td style=\"padding:6px 12px\">'+avg.toFixed(1)+' mmol/L ('+Math.round(avgMg)+' mg/dL)</td></tr>'+\n'<tr><td style=\"padding:6px 12px\"><b>Min / Max</b></td><td style=\"padding:6px 12px\">'+minM.toFixed(1)+' / '+maxM.toFixed(1)+' mmol/L</td></tr>'+\n'<tr style=\"background:#ebf8ff\"><td style=\"padding:6px 12px\"><b>Est. HbA1c</b></td><td style=\"padding:6px 12px\">'+hba1c+'%</td></tr>'+\n'</table>'+\n'<h3 style=\"color:#2c5282\">Time in Range</h3>'+\n'<table style=\"border-collapse:collapse;width:100%\">'+\n'<tr style=\"background:#c6f6d5\"><td style=\"padding:6px 12px\"><b>In range (4-10 mmol/L)</b></td><td style=\"padding:6px 12px;text-align:right\"><b>'+tir+'%</b></td></tr>'+\n'<tr style=\"background:#fed7d7\"><td style=\"padding:6px 12px\">Above range (&gt;10)</td><td style=\"padding:6px 12px;text-align:right\">'+tor+'%</td></tr>'+\n'<tr style=\"background:#bee3f8\"><td style=\"padding:6px 12px\">Below range (&lt;4)</td><td style=\"padding:6px 12px;text-align:right\">'+tbr+'%</td></tr>'+\n'</table>'+\n'<h3 style=\"color:#2c5282\">Daily Breakdown</h3>'+\n'<table style=\"border-collapse:collapse;width:100%;font-size:0.9em\">'+\n'<tr style=\"background:#2c5282;color:white\"><th style=\"padding:6px 8px;text-align:left\">Date</th><th style=\"padding:6px 8px\">Avg</th><th style=\"padding:6px 8px\">Min</th><th style=\"padding:6px 8px\">Max</th><th style=\"padding:6px 8px\">In Range</th></tr>'+\nrows+\n'</table>'+\n'<p style=\"margin-top:20px;color:#718096;font-size:0.8em\">Generated '+new Date().toLocaleString(\"en-GB\")+'. HbA1c estimated from average glucose.</p>'+\n'</body></html>';\nmsg.to=nurseEmail; msg.cc=\"greg@lubel.me\";\nmsg.topic=\"Glucose Summary - Last \"+days+\" days to \"+fmt(end);\nmsg.payload=html;\nreturn msg;\n",
+    "func": "\nvar data=msg.payload;\nif(!data||!data.length){node.error('No readings in period');return null;}\nvar days=msg.days,nurseEmail=msg.nurseEmail,n=data.length,sumM=0,minM=99,maxM=0,inR=0,ab=0,be=0,daily={};\ndata.forEach(function(r){\n  var m=parseFloat(r.mmol); sumM+=m; if(m<minM)minM=m; if(m>maxM)maxM=m;\n  if(m>=4&&m<=10)inR++; else if(m>10)ab++; else be++;\n  var d=r.day; if(!daily[d])daily[d]={s:0,c:0,mn:99,mx:0,ir:0};\n  daily[d].s+=m; daily[d].c++; if(m<daily[d].mn)daily[d].mn=m; if(m>daily[d].mx)daily[d].mx=m;\n  if(m>=4&&m<=10)daily[d].ir++;\n});\nvar avg=sumM/n, avgMg=avg*18.02, hba1c=((avgMg+46.7)/28.7).toFixed(1);\nvar tir=Math.round(inR/n*100), tor=Math.round(ab/n*100), tbr=Math.round(be/n*100);\nvar start=new Date(data[0].ts), end=new Date(data[n-1].ts);\nvar fmt=function(d){return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});};\nvar rows=Object.keys(daily).sort().map(function(d){\n  var v=daily[d],da=(v.s/v.c).toFixed(1),dt=Math.round(v.ir/v.c*100);\n  return '<tr><td style=\"padding:4px 8px\">'+d+'</td><td style=\"padding:4px 8px;text-align:center\">'+da+'</td><td style=\"padding:4px 8px;text-align:center\">'+v.mn.toFixed(1)+'</td><td style=\"padding:4px 8px;text-align:center\">'+v.mx.toFixed(1)+'</td><td style=\"padding:4px 8px;text-align:center\">'+dt+'%</td></tr>';\n}).join('');\nvar html='<!DOCTYPE html><html><body style=\"font-family:Arial,sans-serif;max-width:620px;margin:0 auto\">'+\n'<h2 style=\"color:#2c5282\">Glucose Summary Report</h2>'+\n'<p><b>Period:</b> '+fmt(start)+' to '+fmt(end)+' ('+days+' days) &nbsp; <b>Readings:</b> '+n+'</p>'+\n'<h3 style=\"color:#2c5282\">Summary</h3>'+\n'<table style=\"border-collapse:collapse;width:100%\">'+\n'<tr style=\"background:#ebf8ff\"><td style=\"padding:6px 12px\"><b>Average</b></td><td style=\"padding:6px 12px\">'+avg.toFixed(1)+' mmol/L ('+Math.round(avgMg)+' mg/dL)</td></tr>'+\n'<tr><td style=\"padding:6px 12px\"><b>Min / Max</b></td><td style=\"padding:6px 12px\">'+minM.toFixed(1)+' / '+maxM.toFixed(1)+' mmol/L</td></tr>'+\n'<tr style=\"background:#ebf8ff\"><td style=\"padding:6px 12px\"><b>Est. HbA1c</b></td><td style=\"padding:6px 12px\">'+hba1c+'%</td></tr>'+\n'</table>'+\n'<h3 style=\"color:#2c5282\">Time in Range</h3>'+\n'<table style=\"border-collapse:collapse;width:100%\">'+\n'<tr style=\"background:#c6f6d5\"><td style=\"padding:6px 12px\"><b>In range (4-10 mmol/L)</b></td><td style=\"padding:6px 12px;text-align:right\"><b>'+tir+'%</b></td></tr>'+\n'<tr style=\"background:#fed7d7\"><td style=\"padding:6px 12px\">Above range (&gt;10)</td><td style=\"padding:6px 12px;text-align:right\">'+tor+'%</td></tr>'+\n'<tr style=\"background:#bee3f8\"><td style=\"padding:6px 12px\">Below range (&lt;4)</td><td style=\"padding:6px 12px;text-align:right\">'+tbr+'%</td></tr>'+\n'</table>'+\n'<h3 style=\"color:#2c5282\">Daily Breakdown</h3>'+\n'<table style=\"border-collapse:collapse;width:100%;font-size:0.9em\">'+\n'<tr style=\"background:#2c5282;color:white\"><th style=\"padding:6px 8px;text-align:left\">Date</th><th style=\"padding:6px 8px\">Avg</th><th style=\"padding:6px 8px\">Min</th><th style=\"padding:6px 8px\">Max</th><th style=\"padding:6px 8px\">In Range</th></tr>'+\nrows+\n'</table>'+\n'<p style=\"margin-top:20px;color:#718096;font-size:0.8em\">Generated '+new Date().toLocaleString('en-GB')+'. HbA1c estimated from average glucose.</p>'+\n'</body></html>';\nmsg.to=nurseEmail; msg.cc='your@email.com';\nmsg.topic='Glucose Summary - Last '+days+' days to '+fmt(end);\nmsg.payload=html;\nreturn msg;\n",
     "outputs": 1,
     "timeout": "",
     "noerr": 0,
@@ -6532,7 +6473,7 @@
     "type": "function",
     "z": "rdg-tab",
     "name": "Validate & parse",
-    "func": "\nvar expected = '30eebf31b5e98f5da8833ddd5966751c4f80eb97';\nvar received = msg.req.headers['api-secret'] || '';\nif (received !== expected) {\n    msg.payload = JSON.stringify({error:'Unauthorized'});\n    msg.statusCode = 401;\n    return [null, msg];\n}\nvar entries = Array.isArray(msg.payload) ? msg.payload : [msg.payload];\nvar out = [];\nentries.forEach(function(e) {\n    if (e.type === 'sgv' && e.sgv && e.date) {\n        out.push({\n            ts: e.date,\n            mgdl: parseInt(e.sgv),\n            mmol: parseFloat((e.sgv / 18.02).toFixed(1))\n        });\n    }\n});\nif (!out.length) {\n    msg.payload = '[]';\n    msg.statusCode = 200;\n    return [msg, null];\n}\nmsg._entries = out;\nmsg.payload = JSON.stringify(out);\nmsg.statusCode = 200;\nreturn [msg, null];\n",
+    "func": "\nvar expected = 'YOUR_API_SECRET_SHA1_HASH';\nvar received = msg.req.headers['api-secret'] || '';\nif (received !== expected) {\n    msg.payload = JSON.stringify({error:'Unauthorized'});\n    msg.statusCode = 401;\n    return [null, msg];\n}\nvar entries = Array.isArray(msg.payload) ? msg.payload : [msg.payload];\nvar out = [];\nentries.forEach(function(e) {\n    if (e.type === 'sgv' && e.sgv && e.date) {\n        out.push({\n            ts: e.date,\n            mgdl: parseInt(e.sgv),\n            mmol: parseFloat((e.sgv / 18.02).toFixed(1))\n        });\n    }\n});\nif (!out.length) {\n    msg.payload = '[]';\n    msg.statusCode = 200;\n    return [msg, null];\n}\nmsg._entries = out;\nmsg.payload = JSON.stringify(out);\nmsg.statusCode = 200;\nreturn [msg, null];\n",
     "outputs": 2,
     "x": 390,
     "y": 100,
@@ -7106,6 +7047,324 @@
     "wires": [
       [
         "9b492f4f11c3800e"
+      ]
+    ]
+  },
+  {
+    "id": "grp-recipients",
+    "type": "ui-group",
+    "z": "589703a0ac254105",
+    "name": "Recipients",
+    "page": "f1be50d8b33e8654",
+    "width": "6",
+    "height": "1",
+    "order": 3,
+    "showTitle": true,
+    "className": "",
+    "visible": "true"
+  },
+  {
+    "id": "btn-new-recip",
+    "type": "ui-button",
+    "z": "589703a0ac254105",
+    "group": "dc491e2c427044e1",
+    "label": "New",
+    "order": 3,
+    "width": "1",
+    "height": "1",
+    "emulateClick": false,
+    "tooltip": "Add recipient with current fields",
+    "color": "",
+    "bgcolor": "",
+    "className": "",
+    "icon": "",
+    "iconPosition": "left",
+    "payload": "new",
+    "payloadType": "str",
+    "topic": "",
+    "topicType": "str",
+    "buttonColor": "",
+    "textColor": "",
+    "iconColor": "",
+    "enableClick": true,
+    "enablePointerdown": false,
+    "pointerdownPayload": "",
+    "pointerdownPayloadType": "str",
+    "enablePointerup": false,
+    "pointerupPayload": "",
+    "pointerupPayloadType": "str",
+    "x": 370,
+    "y": 160,
+    "wires": [
+      [
+        "fn-new-recip"
+      ]
+    ]
+  },
+  {
+    "id": "btn-upd-recip",
+    "type": "ui-button",
+    "z": "589703a0ac254105",
+    "group": "dc491e2c427044e1",
+    "label": "Update",
+    "order": 4,
+    "width": "2",
+    "height": "1",
+    "emulateClick": false,
+    "tooltip": "Save changes to selected recipient",
+    "color": "",
+    "bgcolor": "",
+    "className": "",
+    "icon": "",
+    "iconPosition": "left",
+    "payload": "update",
+    "payloadType": "str",
+    "topic": "",
+    "topicType": "str",
+    "buttonColor": "",
+    "textColor": "",
+    "iconColor": "",
+    "enableClick": true,
+    "enablePointerdown": false,
+    "pointerdownPayload": "",
+    "pointerdownPayloadType": "str",
+    "enablePointerup": false,
+    "pointerupPayload": "",
+    "pointerupPayloadType": "str",
+    "x": 510,
+    "y": 160,
+    "wires": [
+      [
+        "fn-upd-recip"
+      ]
+    ]
+  },
+  {
+    "id": "tbl-recip",
+    "type": "ui-table",
+    "z": "589703a0ac254105",
+    "group": "grp-recipients",
+    "name": "Recipient List",
+    "order": 1,
+    "width": "6",
+    "height": "5",
+    "columns": [
+      {
+        "key": "email",
+        "label": "Email",
+        "width": "",
+        "sortable": true,
+        "type": "text",
+        "align": "left"
+      },
+      {
+        "key": "cadence",
+        "label": "Every",
+        "width": "70",
+        "sortable": false,
+        "type": "text",
+        "align": "center"
+      },
+      {
+        "key": "last_sent",
+        "label": "Last Sent",
+        "width": "110",
+        "sortable": false,
+        "type": "text",
+        "align": "left"
+      },
+      {
+        "key": "next_send",
+        "label": "Next Send",
+        "width": "110",
+        "sortable": false,
+        "type": "text",
+        "align": "left"
+      }
+    ],
+    "selectionType": "click",
+    "multiSelect": false,
+    "showSearch": false,
+    "x": 140,
+    "y": 550,
+    "wires": [
+      [
+        "fn-row-select"
+      ]
+    ]
+  },
+  {
+    "id": "mysql-recip-due",
+    "type": "mysql",
+    "z": "589703a0ac254105",
+    "mydb": "65d34d20682b7691",
+    "name": "Due Recipients",
+    "x": 580,
+    "y": 400,
+    "wires": [
+      [
+        "fn-split-due"
+      ]
+    ]
+  },
+  {
+    "id": "fn-split-due",
+    "type": "function",
+    "z": "589703a0ac254105",
+    "name": "Split due",
+    "func": "\nvar recipients = msg.payload;\nif (!recipients || !recipients.length) return null;\nreturn [recipients.map(function(r) {\n  return {\n    days: r.cadence_days,\n    nurseEmail: r.email,\n    recipientId: r.id,\n    topic: 'SELECT ts,mgdl,mmol,FROM_UNIXTIME(ts/1000,\\'%Y-%m-%d\\') AS day FROM readings WHERE ts>(UNIX_TIMESTAMP()-'+(r.cadence_days*86400)+')*1000 ORDER BY ts ASC',\n    payload: null\n  };\n})];\n",
+    "outputs": 1,
+    "x": 780,
+    "y": 400,
+    "wires": [
+      [
+        "bd29734313d54e88"
+      ]
+    ]
+  },
+  {
+    "id": "fn-row-select",
+    "type": "function",
+    "z": "589703a0ac254105",
+    "name": "Row selected",
+    "func": "\nvar row = msg.payload;\nif (!row || !row._id) return null;\nflow.set('selectedRecipientId', row._id);\nvar emailMsg = {payload: row._email || '', topic: 'nurseEmail'};\nvar cadMsg   = {payload: String(row._cadence_days || 7), topic: 'periodDays'};\nreturn [emailMsg, cadMsg];\n",
+    "outputs": 2,
+    "x": 360,
+    "y": 550,
+    "wires": [
+      [
+        "03e8814776f7ab68"
+      ],
+      [
+        "ebf2bcf371cff732"
+      ]
+    ]
+  },
+  {
+    "id": "fn-new-recip",
+    "type": "function",
+    "z": "589703a0ac254105",
+    "name": "Insert recipient",
+    "func": "\nvar email = (flow.get('nurseEmail') || '').trim();\nvar days  = parseInt(flow.get('periodDays')) || 7;\nif (!email || email.indexOf('@') < 0) { node.warn('Enter a valid email first'); return null; }\nvar safe = email.replace(/'/g, \"''\");\nvar next = Date.now() + days * 86400000;\nmsg.topic   = \"INSERT INTO report_recipients (email, cadence_days, last_sent_ms, next_send_ms) VALUES ('\" + safe + \"', \" + days + \", 0, \" + next + \")\";\nmsg.payload = null;\nreturn msg;\n",
+    "outputs": 1,
+    "x": 360,
+    "y": 620,
+    "wires": [
+      [
+        "mysql-recip-rw"
+      ]
+    ]
+  },
+  {
+    "id": "fn-upd-recip",
+    "type": "function",
+    "z": "589703a0ac254105",
+    "name": "Update recipient",
+    "func": "\nvar id    = parseInt(flow.get('selectedRecipientId'));\nif (!id)  { node.warn('Select a recipient row first'); return null; }\nvar email = (flow.get('nurseEmail') || '').trim();\nvar days  = parseInt(flow.get('periodDays')) || 7;\nif (!email || email.indexOf('@') < 0) { node.warn('Enter a valid email first'); return null; }\nvar safe = email.replace(/'/g, \"''\");\nvar next = Date.now() + days * 86400000;\nmsg.topic   = \"UPDATE report_recipients SET email='\" + safe + \"', cadence_days=\" + days + \", next_send_ms=\" + next + \" WHERE id=\" + id;\nmsg.payload = null;\nreturn msg;\n",
+    "outputs": 1,
+    "x": 360,
+    "y": 680,
+    "wires": [
+      [
+        "mysql-recip-rw"
+      ]
+    ]
+  },
+  {
+    "id": "fn-upd-lastsent",
+    "type": "function",
+    "z": "589703a0ac254105",
+    "name": "Update last sent",
+    "func": "\nvar id = parseInt(msg.recipientId);\nif (!id) return null;\nvar now  = Date.now();\nvar next = now + (parseInt(msg.days) || 7) * 86400000;\nmsg.topic   = 'UPDATE report_recipients SET last_sent_ms=' + now + ', next_send_ms=' + next + ' WHERE id=' + id;\nmsg.payload = null;\nreturn msg;\n",
+    "outputs": 1,
+    "x": 360,
+    "y": 740,
+    "wires": [
+      [
+        "mysql-recip-rw"
+      ]
+    ]
+  },
+  {
+    "id": "mysql-recip-rw",
+    "type": "mysql",
+    "z": "589703a0ac254105",
+    "mydb": "65d34d20682b7691",
+    "name": "Recipients Write",
+    "x": 560,
+    "y": 680,
+    "wires": [
+      [
+        "fn-reload"
+      ]
+    ]
+  },
+  {
+    "id": "fn-reload",
+    "type": "function",
+    "z": "589703a0ac254105",
+    "name": "Reload recipients",
+    "func": "msg.topic='SELECT id,email,cadence_days,last_sent_ms,next_send_ms FROM report_recipients ORDER BY email';msg.payload=null;return msg;",
+    "outputs": 1,
+    "x": 760,
+    "y": 680,
+    "wires": [
+      [
+        "mysql-recip-sel"
+      ]
+    ]
+  },
+  {
+    "id": "mysql-recip-sel",
+    "type": "mysql",
+    "z": "589703a0ac254105",
+    "mydb": "65d34d20682b7691",
+    "name": "Recipients Read",
+    "x": 960,
+    "y": 680,
+    "wires": [
+      [
+        "fn-fmt-table"
+      ]
+    ]
+  },
+  {
+    "id": "fn-fmt-table",
+    "type": "function",
+    "z": "589703a0ac254105",
+    "name": "Format table",
+    "func": "\nvar rows = msg.payload || [];\nvar fmtDate = function(ms) {\n  if (!ms || ms === 0) return '\u2014';\n  return new Date(parseInt(ms)).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'2-digit'});\n};\nmsg.payload = rows.map(function(r) {\n  var email = r.email || '';\n  var trunc = email.length > 24 ? email.substring(0, 22) + '\u2026' : email;\n  return {\n    _id:           r.id,\n    _email:        email,\n    _cadence_days: r.cadence_days,\n    email:         trunc,\n    cadence:       r.cadence_days + 'd',\n    last_sent:     fmtDate(r.last_sent_ms),\n    next_send:     fmtDate(r.next_send_ms)\n  };\n});\nreturn msg;\n",
+    "outputs": 1,
+    "x": 1160,
+    "y": 680,
+    "wires": [
+      [
+        "tbl-recip"
+      ]
+    ]
+  },
+  {
+    "id": "inject-load",
+    "type": "inject",
+    "z": "589703a0ac254105",
+    "name": "Load on start",
+    "props": [
+      {
+        "p": "payload"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": true,
+    "onceDelay": 1.5,
+    "topic": "",
+    "payload": "",
+    "payloadType": "date",
+    "x": 160,
+    "y": 780,
+    "wires": [
+      [
+        "fn-reload"
       ]
     ]
   }
